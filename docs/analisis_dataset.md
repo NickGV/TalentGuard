@@ -80,7 +80,7 @@ La variable `Attrition` presenta un **desbalance significativo** entre sus clase
 
 Este desbalance implica que un modelo que siempre prediga "No" obtendría una precisión aparente del 83.9% sin aprender ningún patrón real. Por esta razón, el F1-Score fue seleccionado como métrica principal, y se deberán considerar técnicas de balanceo como SMOTE o ajuste de pesos en el modelo durante el entrenamiento.
 
-![Distribución de Attrition](../charts/fig_attrition_distribucion.png)
+![Distribución de Attrition](charts/fig_attrition_distribucion.png)
 
 ---
 
@@ -92,37 +92,37 @@ La exploración visual y estadística del dataset reveló los siguientes patrone
 
 Los empleados que realizan horas extra presentan una tasa de abandono del **30.5%**, casi tres veces superior a la de los empleados que no las realizan (**10.4%**). Esto convierte a `OverTime` en una de las variables con mayor poder predictivo del dataset, y es coherente con el contexto de la empresa de construcción e ingeniería donde la carga laboral es un factor crítico de rotación.
 
-![Tasa de Rotación por Horas Extra](../charts/fig_overtime_attrition.png)
+![Tasa de Rotación por Horas Extra](charts/fig_overtime_attrition.png)
 
 ### 6.2 Ingreso Mensual (MonthlyIncome)
 
 Existe una diferencia clara en la compensación entre ambos grupos. La mediana salarial de los empleados que permanecen es de **$5.204**, mientras que la de los empleados que abandonan es de **$3.202**, una diferencia del 38.5%. La mayoría de los abandonos se concentran en los rangos salariales más bajos (entre $2.500 y $5.000), lo que sugiere que la compensación es un factor determinante en la decisión de renuncia.
 
-![Distribución de Ingreso Mensual por Attrition](../charts/fig_income_attrition.png)
+![Distribución de Ingreso Mensual por Attrition](charts/fig_income_attrition.png)
 
 ### 6.3 Antigüedad (YearsAtCompany)
 
 Los empleados con menor antigüedad son los más propensos a abandonar la organización. La mediana de años en la empresa para quienes abandonan es de **3 años**, frente a **6 años** para quienes permanecen. El mayor volumen de renuncias se concentra entre los primeros 2 años, lo que indica que el período de adaptación y fidelización temprana es crítico para la retención.
 
-![Años en la Empresa por Attrition](../charts/fig_years_attrition.png)
+![Años en la Empresa por Attrition](charts/fig_years_attrition.png)
 
 ### 6.4 Satisfacción Laboral (JobSatisfaction)
 
 Se observa una relación inversa entre satisfacción y abandono. Los empleados con nivel de satisfacción bajo (`Low`) presentan una tasa de abandono del **22.8%**, mientras que quienes reportan satisfacción muy alta (`Very High`) tienen una tasa del **11.3%**. Esto confirma que la satisfacción laboral es un predictor relevante de la rotación.
 
-![Tasa de Abandono por Satisfacción Laboral](../charts/fig_jobsatisfaction_attrition.png)
+![Tasa de Abandono por Satisfacción Laboral](charts/fig_jobsatisfaction_attrition.png)
 
 ### 6.5 Balance Vida-Trabajo (WorkLifeBalance)
 
 Los empleados con peor balance vida-trabajo (`Bad`, nivel 1) presentan la mayor tasa de abandono. La tasa disminuye progresivamente conforme mejora el balance, lo que refuerza la importancia de esta variable en el modelo predictivo.
 
-![Tasa de Abandono por Balance Vida-Trabajo](../charts/fig_worklife_attrition.png)
+![Tasa de Abandono por Balance Vida-Trabajo](charts/fig_worklife_attrition.png)
 
 ### 6.6 Correlación con Attrition
 
 Las variables que presentan una mayor asociación lineal con la variable objetivo (es decir, que aumentan la probabilidad de renuncia) son `DistanceFromHome`, `NumCompaniesWorked` y `MonthlyRate`. Las variables con mayor correlación negativa (que reducen la probabilidad de abandono) son `TotalWorkingYears`, `YearsAtCompany` y `JobLevel`, lo que confirma que la estabilidad y la trayectoria profesional dentro de la organización son factores protectores contra la rotación.
 
-![Correlación de Variables con Attrition](../charts/fig_correlacion_attrition.png)
+![Correlación de Variables con Attrition](charts/fig_correlacion_attrition.png)
 
 ---
 
