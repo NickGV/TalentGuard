@@ -124,4 +124,4 @@ jupyter notebook notebooks/01_exploracion.ipynb
 - [x] Análisis cualitativo del dataset
 - [x] Ficha de formulación del proyecto
 - [x] Repositorio GitHub con estructura completa
-- [ ] Wireframe del dashboard *(en progreso)*
+- [x] Wireframe del dashboard*
