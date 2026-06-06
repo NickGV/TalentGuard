@@ -1,0 +1,56 @@
+site_name: TalentGuard
+site_description: Sistema Inteligente para la Predicción del Riesgo de Rotación de Empleados
+site_author: Nicolas Gomez
+site_url: https://nickgv.github.io/TalentGuard/
+
+repo_name: NickGV/TalentGuard
+repo_url: https://github.com/NickGV/TalentGuard
+
+theme:
+  name: material
+  language: es
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Cambiar a modo oscuro
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Cambiar a modo claro
+
+nav:
+  - Inicio: index.md
+  - Ficha del Proyecto: ficha_proyecto.md
+  - Análisis del Dataset: analisis_dataset.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search:
+      lang: es
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/NickGV
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/nicolasgomez
