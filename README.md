@@ -96,6 +96,19 @@ TalentGuard/
 
 ---
 
+## 📚 Documentación Web
+
+La documentación completa del proyecto está publicada en **GitHub Pages**:
+
+🔗 **https://nickgv.github.io/TalentGuard/**
+
+Incluye:
+- **Inicio** — Resumen del proyecto (este README)
+- **Ficha del Proyecto** — Formulación completa del proyecto integrador
+- **Análisis del Dataset** — EDA detallado con 7 visualizaciones
+
+---
+
 ## Cómo Ejecutar
 
 ```bash
