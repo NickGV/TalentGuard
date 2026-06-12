@@ -1,10 +1,11 @@
 # TalentGuard 🛡️
+
 ## Sistema Inteligente para la Predicción del Riesgo de Rotación de Empleados
 
 **Autor:** Nicolas Gomez  
 **Programa:** Tecnología en Desarrollo de Software  
 **Diplomado:** Desarrollo Web para Analítica de Datos  
-**Fecha:** Junio 2026  
+**Fecha:** Junio 2026
 
 ---
 
@@ -28,14 +29,14 @@ Las organizaciones de construcción e ingeniería enfrentan alta rotación en á
 
 ## Dataset
 
-| Atributo | Detalle |
-|---|---|
-| **Nombre** | IBM HR Analytics Employee Attrition & Performance |
-| **Fuente** | [Kaggle](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) |
-| **Licencia** | CC0 (Dominio Público) |
-| **Registros** | 1.470 |
-| **Variables** | 35 |
-| **Variable objetivo** | `Attrition` (Yes / No) |
+| Atributo              | Detalle                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| **Nombre**            | IBM HR Analytics Employee Attrition & Performance                                          |
+| **Fuente**            | [Kaggle](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) |
+| **Licencia**          | CC0 (Dominio Público)                                                                      |
+| **Registros**         | 1.470                                                                                      |
+| **Variables**         | 35                                                                                         |
+| **Variable objetivo** | `Attrition` (Yes / No)                                                                     |
 
 ---
 
@@ -49,7 +50,7 @@ Las organizaciones de construcción e ingeniería enfrentan alta rotación en á
 
 ## Estructura del Repositorio
 
-~~~
+```
 TalentGuard/
 ├── data/
 │   └── raw/
@@ -71,7 +72,7 @@ TalentGuard/
 ├── .gitignore
 ├── requirements.txt
 └── README.md
-~~~
+```
 
 ---
 
@@ -103,9 +104,18 @@ La documentación completa del proyecto está publicada en **GitHub Pages**:
 🔗 **https://nickgv.github.io/TalentGuard/**
 
 Incluye:
+
 - **Inicio** — Resumen del proyecto (este README)
 - **Ficha del Proyecto** — Formulación completa del proyecto integrador
 - **Análisis del Dataset** — EDA detallado con 7 visualizaciones
+
+Para correr la documentación localmente:
+
+```bash
+pip install mkdocs-material
+mkdocs serve
+# Abre http://127.0.0.1:8000
+```
 
 ---
 
@@ -128,13 +138,3 @@ pip install -r requirements.txt
 jupyter notebook notebooks/01_exploracion.ipynb
 ```
 
----
-
-## Entrega 1 — Estado actual
-
-- [x] Planteamiento del problema analítico
-- [x] Pregunta analítica
-- [x] Análisis cualitativo del dataset
-- [x] Ficha de formulación del proyecto
-- [x] Repositorio GitHub con estructura completa
-- [x] Wireframe del dashboard*

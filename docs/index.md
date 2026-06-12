@@ -34,8 +34,9 @@ Las organizaciones de construcción e ingeniería enfrentan alta rotación en á
 | **Fuente** | [Kaggle](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) |
 | **Licencia** | CC0 (Dominio Público) |
 | **Registros** | 1.470 |
-| **Variables** | 35 |
-| **Variable objetivo** | `Attrition` (Yes / No) |
+| **Variables originales** | 35 |
+| **Variables tras limpieza** | 44 (con OHE) |
+| **Variable objetivo** | `Attrition` (Yes / No → 1 / 0) |
 
 ---
 
@@ -44,34 +45,6 @@ Las organizaciones de construcción e ingeniería enfrentan alta rotación en á
 - **Tarea:** Clasificación binaria
 - **Métrica principal:** F1-Score
 - **Justificación:** El dataset presenta desbalance de clases (83.9% No / 16.1% Yes), por lo que el F1-Score es más adecuado que el accuracy para evaluar el modelo.
-
----
-
-## Estructura del Repositorio
-
-~~~
-TalentGuard/
-├── data/
-│   └── raw/
-│       └── WA_Fn-UseC_-HR-Employee-Attrition.csv
-├── notebooks/
-│   └── 01_exploracion.ipynb
-├── docs/
-│   ├── ficha_proyecto.md
-│   ├── analisis_dataset.md
-│   └── wireframe_dashboard.png
-├── charts/
-│   ├── fig_attrition_distribucion.png
-│   ├── fig_overtime_attrition.png
-│   ├── fig_income_attrition.png
-│   ├── fig_years_attrition.png
-│   ├── fig_jobsatisfaction_attrition.png
-│   ├── fig_worklife_attrition.png
-│   └── fig_correlacion_attrition.png
-├── .gitignore
-├── requirements.txt
-└── README.md
-~~~
 
 ---
 
@@ -84,14 +57,71 @@ TalentGuard/
 
 ---
 
+## Pipeline de Datos
+
+El dataset crudo (35 variables) pasa por un pipeline reproducible que genera un dataset procesado listo para el modelado:
+
+| Paso | Acción | Resultado |
+|---|---|---|
+| Diagnóstico inicial | Shape, dtypes, nulos, duplicados | Sin problemas detectados |
+| Columnas constantes | Eliminación de `EmployeeCount`, `Over18`, `StandardHours`, `EmployeeNumber` | −4 columnas |
+| Codificación binaria | `Attrition`, `OverTime`, `Gender` → 0/1 | — |
+| Codificación ordinal | `BusinessTravel` → 0/1/2 | — |
+| One-Hot Encoding | `Department`, `EducationField`, `JobRole`, `MaritalStatus` | +17 columnas dummy |
+| Split train/test | 80% / 20%, `stratify=Attrition`, `random_state=42` | 1.176 train / 294 test |
+
+El escalado numérico se aplica en el notebook de modelado, ajustado exclusivamente sobre el conjunto de entrenamiento para evitar fuga de datos.
+
+---
+
+## Estructura del Repositorio
+
+```
+TalentGuard/
+├── data/
+│   ├── raw/
+│   │   └── WA_Fn-UseC_-HR-Employee-Attrition.csv
+│   └── processed/
+│       ├── dataset_limpio.csv
+│       ├── X_train.csv
+│       ├── X_test.csv
+│       ├── y_train.csv
+│       └── y_test.csv
+├── notebooks/
+│   ├── 01_exploracion.ipynb
+│   ├── 02_eda_limpieza.ipynb
+│   └── 03_modelado.ipynb          ← en desarrollo
+├── models/
+│   ├── modelo_final.pkl           ← en desarrollo
+│   └── model_metadata.json        ← en desarrollo
+├── src/
+│   └── ml/
+│       └── entrenar_modelo.py     ← en desarrollo
+├── docs/
+│   ├── ficha_proyecto.md
+│   ├── analisis_dataset.md
+│   ├── diccionario_datos.md
+│   ├── arquitectura.md            ← en desarrollo
+│   └── wireframe_dashboard.png
+├── app_final.py                   ← en desarrollo
+├── .gitignore
+├── requirements.txt
+└── README.md
+```
+
+---
+
 ## Tecnologías Utilizadas
 
 - Python 3.x
 - pandas, numpy
 - matplotlib, seaborn
-- scikit-learn
+- scikit-learn (train_test_split, LabelEncoder, Pipeline)
+- joblib (serialización del modelo)
+- Streamlit (dashboard web)
 - Jupyter Notebook
 - Git / GitHub
+- MkDocs Material (documentación web)
 - **Diseño UI:** [Stitch by Google](https://stitch.withgoogle.com/)
 
 ---
@@ -111,17 +141,12 @@ source venv/bin/activate  # Linux/macOS
 # 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Ejecutar Jupyter Notebook
+# 4. Exploración inicial
 jupyter notebook notebooks/01_exploracion.ipynb
+
+# 5. Pipeline de limpieza
+jupyter notebook notebooks/02_eda_limpieza.ipynb
+
+# 6. Dashboard (disponible al completar el modelado)
+# streamlit run app_final.py
 ```
-
----
-
-## Entrega 1 — Estado actual
-
-- [x] Planteamiento del problema analítico
-- [x] Pregunta analítica
-- [x] Análisis cualitativo del dataset
-- [x] Ficha de formulación del proyecto
-- [x] Repositorio GitHub con estructura completa
-- [x] Wireframe del dashboard*

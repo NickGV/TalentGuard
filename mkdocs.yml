@@ -34,6 +34,7 @@ nav:
   - Inicio: index.md
   - Ficha del Proyecto: ficha_proyecto.md
   - Análisis del Dataset: analisis_dataset.md
+  - Diccionario de Datos: diccionario_datos.md
 
 markdown_extensions:
   - admonition
