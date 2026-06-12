@@ -74,6 +74,23 @@ El escalado numérico se aplica en el notebook de modelado, ajustado exclusivame
 
 ---
 
+## Resultados del Modelo
+
+Se compararon dos algoritmos sobre el conjunto de test (294 registros, split 80/20 estratificado):
+
+| Modelo | Accuracy | F1-macro | F1-Yes | Precision | Recall | ROC-AUC |
+|---|---|---|---|---|---|---|
+| **Logistic Regression** ✅ | 0.7653 | **0.6611** | 0.4733 | 0.6464 | 0.7225 | 0.7986 |
+| Random Forest | 0.8299 | 0.6135 | 0.3243 | 0.6567 | 0.5973 | 0.7793 |
+
+**Modelo seleccionado:** Logistic Regression — mejor F1-macro sobre test.
+
+El modelo detecta **2 de cada 3 empleados** que realmente van a renunciar (recall clase Yes = 0.66). La configuración `class_weight='balanced'` prioriza no perder casos reales de abandono (minimizar falsos negativos), que en el contexto de RRHH es el error más costoso.
+
+El modelo serializado responde directamente la pregunta analítica del proyecto y será cargado por el dashboard sin reentrenamiento en tiempo de ejecución.
+
+---
+
 ## Estructura del Repositorio
 
 ```
@@ -90,13 +107,13 @@ TalentGuard/
 ├── notebooks/
 │   ├── 01_exploracion.ipynb
 │   ├── 02_eda_limpieza.ipynb
-│   └── 03_modelado.ipynb          ← en desarrollo
+│   └── 03_modelado.ipynb
 ├── models/
-│   ├── modelo_final.pkl           ← en desarrollo
-│   └── model_metadata.json        ← en desarrollo
+│   ├── modelo_final.pkl
+│   └── model_metadata.json
 ├── src/
 │   └── ml/
-│       └── entrenar_modelo.py     ← en desarrollo
+│       └── entrenar_modelo.py
 ├── docs/
 │   ├── ficha_proyecto.md
 │   ├── analisis_dataset.md
@@ -147,6 +164,12 @@ jupyter notebook notebooks/01_exploracion.ipynb
 # 5. Pipeline de limpieza
 jupyter notebook notebooks/02_eda_limpieza.ipynb
 
-# 6. Dashboard (disponible al completar el modelado)
-# streamlit run app_final.py
+# 6. Modelado y serialización (notebook interactivo)
+jupyter notebook notebooks/03_modelado.ipynb
+
+# 6b. O bien, entrenar desde terminal (reproduce el mismo resultado)
+python src/ml/entrenar_modelo.py
+
+# 7. Dashboard
+streamlit run app_final.py
 ```
