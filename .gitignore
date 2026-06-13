@@ -1,1 +1,47 @@
+# ── Entorno virtual ──
 venv/
+.venv/
+env/
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.Python
+
+# ── Jupyter Notebook ──
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# ── Variables de entorno y secretos ──
+.env
+.env.local
+.env.*.local
+
+# ── IDEs y editores ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── pytest y testing ──
+.pytest_cache/
+.mypy_cache/
+.cache/
+*.coverage
+htmlcov/
+
+# ── MkDocs ──
+/site/
+
+# ── logs ──
+*.log

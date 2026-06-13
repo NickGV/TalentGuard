@@ -9,21 +9,17 @@
 
 ---
 
-## Descripción del Proyecto
+## Descripción
 
 TalentGuard es una aplicación web analítica orientada a predecir el riesgo de rotación voluntaria de empleados en empresas de construcción e ingeniería. A partir de variables como satisfacción laboral, horas extra, balance vida-trabajo, antigüedad e ingresos mensuales, el sistema clasifica a cada empleado según su probabilidad de abandono (Yes / No), con el fin de apoyar al área de Recursos Humanos en la priorización de estrategias de retención de talento.
 
----
-
-## Problema
-
-Las organizaciones de construcción e ingeniería enfrentan alta rotación en áreas estratégicas como planeación y gestión de proyectos. Sin una herramienta predictiva, las intervenciones de retención ocurren de forma reactiva, cuando ya es demasiado tarde para revertir la decisión del empleado.
+El proyecto integra un pipeline de limpieza de datos, un modelo de clasificación binaria (Logistic Regression) y un dashboard interactivo desarrollado con Streamlit.
 
 ---
 
 ## Pregunta Analítica
 
-¿Es posible clasificar el riesgo de abandono voluntario (`Attrition`: Yes/No) de un empleado a partir de variables como satisfacción laboral, horas extra, balance vida-trabajo, antigüedad e ingresos mensuales, con el fin de priorizar estrategias de retención por parte del área de Recursos Humanos?
+> ¿Es posible clasificar el riesgo de abandono voluntario (`Attrition`: Yes/No) de un empleado en una empresa de construcción e ingeniería, a partir de variables como satisfacción laboral, horas extra (`OverTime`), balance vida-trabajo, antigüedad e ingresos mensuales, con el fin de apoyar la identificación temprana de colaboradores con alta probabilidad de abandono y priorizar estrategias de retención por parte del área de Recursos Humanos?
 
 ---
 
@@ -33,18 +29,56 @@ Las organizaciones de construcción e ingeniería enfrentan alta rotación en á
 | --------------------- | ------------------------------------------------------------------------------------------ |
 | **Nombre**            | IBM HR Analytics Employee Attrition & Performance                                          |
 | **Fuente**            | [Kaggle](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) |
-| **Licencia**          | CC0 (Dominio Público)                                                                      |
+| **Licencia**          | CC0 (Dominio Público) — uso académico y comercial permitido sin restricciones              |
 | **Registros**         | 1.470                                                                                      |
-| **Variables**         | 35                                                                                         |
+| **Variables**         | 35 (3 constantes eliminadas, 1 identificador eliminado → 31 efectivas)                     |
 | **Variable objetivo** | `Attrition` (Yes / No)                                                                     |
+| **Desbalance**        | 83.9% No — 16.1% Yes                                                                       |
+
+### Variables principales
+
+| Variable | Tipo | Descripción |
+|----------|------|-------------|
+| `OverTime` | Binaria | Horas extra (Yes/No) |
+| `JobSatisfaction` | Ordinal (1-4) | Satisfacción laboral |
+| `WorkLifeBalance` | Ordinal (1-4) | Balance vida-trabajo |
+| `MonthlyIncome` | Numérica | Ingreso mensual (USD) |
+| `YearsAtCompany` | Numérica | Antigüedad en la empresa |
+| `EnvironmentSatisfaction` | Ordinal (1-4) | Satisfacción con el entorno |
+| `Department` | Categórica | Departamento |
+| `Age` | Numérica | Edad del empleado |
+
+Para la lista completa de las 44 columnas del dataset procesado, consultar [`docs/diccionario_datos.md`](docs/diccionario_datos.md).
 
 ---
 
 ## Tipo de Tarea y Métrica
 
 - **Tarea:** Clasificación binaria
-- **Métrica principal:** F1-Score
-- **Justificación:** El dataset presenta desbalance de clases (83.9% No / 16.1% Yes), por lo que el F1-Score es más adecuado que el accuracy para evaluar el modelo.
+- **Métrica principal:** F1-Score (macro)
+- **Justificación:** El dataset presenta desbalance de clases (83.9% No / 16.1% Yes). El accuracy puede ser engañoso: un modelo que siempre prediga "No" obtendría un 83.9% sin identificar ningún caso real. F1-Score combina precisión y recall, evaluando de forma equilibrada la capacidad del modelo para detectar empleados con riesgo de abandono.
+
+---
+
+## Arquitectura de la Solución
+
+El sistema sigue una arquitectura de 4 capas:
+
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│   DATOS      │    │  PIPELINE    │    │  MODELO ML       │    │  DASHBOARD       │
+│   CRUDOS     │───▶│  DE ETL      │───▶│  (Pipeline       │───▶│  STREAMLIT       │
+│  data/raw/   │    │ 02_EDA_      │    │   sklearn)       │    │  app_final.py    │
+│              │    │ limpieza     │    │  .pkl + JSON     │    │  tabs + filtros  │
+└──────────────┘    └──────────────┘    └──────────────────┘    └──────────────────┘
+```
+
+1. **Datos:** Dataset original en `data/raw/`, procesado en `data/processed/`
+2. **Pipeline ETL:** Notebook `02_eda_limpieza.ipynb` con limpieza, codificación y split
+3. **Modelo ML:** Logistic Regression con StandardScaler en Pipeline, serializado con joblib
+4. **Dashboard:** Streamlit con análisis exploratorio y predicción interactiva
+
+Para el detalle completo, ver [`docs/arquitectura.md`](docs/arquitectura.md).
 
 ---
 
@@ -52,74 +86,71 @@ Las organizaciones de construcción e ingeniería enfrentan alta rotación en á
 
 ```
 TalentGuard/
+├── README.md                      ← Este archivo
+├── .gitignore
+├── requirements.txt               ← Dependencias con versiones fijas
+├── app_final.py                   ← Dashboard Streamlit (Componente 3)
+│
 ├── data/
-│   └── raw/
-│       └── WA_Fn-UseC_-HR-Employee-Attrition.csv
+│   ├── raw/                       ← Dataset original sin modificar
+│   │   └── WA_Fn-UseC_-HR-Employee-Attrition.csv
+│   └── processed/                 ← Dataset limpio listo para modelado
+│       ├── dataset_limpio.csv     ← 1.470 registros × 44 columnas
+│       ├── X_train.csv            ← 1.176 registros (80%)
+│       ├── X_test.csv             ← 294 registros (20%)
+│       ├── y_train.csv
+│       └── y_test.csv
+│
 ├── notebooks/
-│   └── 01_exploracion.ipynb
-├── docs/
-│   ├── ficha_proyecto.md
-│   ├── analisis_dataset.md
-│   └── wireframe_dashboard.png
-├── charts/
+│   ├── 01_exploracion.ipynb       ← Análisis exploratorio inicial (Entrega 1)
+│   ├── 02_eda_limpieza.ipynb      ← Pipeline de limpieza y preparación
+│   └── 03_modelado.ipynb          ← Experimentación y selección del modelo
+│
+├── src/
+│   └── ml/
+│       └── entrenar_modelo.py     ← Script de entrenamiento local reproducible
+│
+├── models/
+│   ├── modelo_final.pkl           ← Pipeline serializado (StandardScaler + LR)
+│   └── model_metadata.json        ← Métricas y metadatos del modelo
+│
+├── charts/                        ← Gráficos generados por los notebooks
 │   ├── fig_attrition_distribucion.png
+│   ├── fig_comparacion_modelos.png
+│   ├── fig_curva_roc.png
+│   ├── fig_matriz_confusion.png
+│   ├── fig_feature_importance.png
 │   ├── fig_overtime_attrition.png
 │   ├── fig_income_attrition.png
 │   ├── fig_years_attrition.png
 │   ├── fig_jobsatisfaction_attrition.png
 │   ├── fig_worklife_attrition.png
 │   └── fig_correlacion_attrition.png
-├── .gitignore
-├── requirements.txt
-└── README.md
+│
+├── docs/                          ← Documentación técnica
+│   ├── ficha_proyecto.md          ← Formulación del proyecto (Entrega 1)
+│   ├── analisis_dataset.md        ← Análisis cualitativo del dataset
+│   ├── diccionario_datos.md       ← Variables documentadas con tipo, rol y descripción
+│   ├── arquitectura.md            ← Arquitectura del sistema
+│   ├── reflexion_etica.md         ← Reflexión ética actualizada
+│   ├── wiregrame_dashboard.png    ← Wireframe del dashboard
+│   └── charts/                    ← Visualizaciones del EDA
+│
+└── .github/
+    └── workflows/
+        └── deploy-docs.yml        ← CI/CD para GitHub Pages
 ```
 
 ---
 
-## Hallazgos Principales del EDA
+## Instalación y Ejecución
 
-- Empleados con horas extra tienen tasa de abandono del **30.5%** vs **10.4%** sin horas extra
-- Mediana salarial: quienes abandonan **$3.202** vs quienes permanecen **$5.204**
-- El **61%** de los abandonos ocurren en los primeros **3 años** de antigüedad
-- A menor satisfacción laboral, mayor tasa de abandono: **22.8%** en nivel Low vs **11.3%** en Very High
+### Requisitos
 
----
+- Python 3.10+
+- pip
 
-## Tecnologías Utilizadas
-
-- Python 3.x
-- pandas, numpy
-- matplotlib, seaborn
-- scikit-learn
-- Jupyter Notebook
-- Git / GitHub
-- **Diseño UI:** [Stitch by Google](https://stitch.withgoogle.com/)
-
----
-
-## 📚 Documentación Web
-
-La documentación completa del proyecto está publicada en **GitHub Pages**:
-
-🔗 **https://nickgv.github.io/TalentGuard/**
-
-Incluye:
-
-- **Inicio** — Resumen del proyecto (este README)
-- **Ficha del Proyecto** — Formulación completa del proyecto integrador
-- **Análisis del Dataset** — EDA detallado con 7 visualizaciones
-
-Para correr la documentación localmente:
-
-```bash
-pip install mkdocs-material
-mkdocs serve
-# Abre http://127.0.0.1:8000
-```
-
----
-
-## Cómo Ejecutar
+### Pasos
 
 ```bash
 # 1. Clonar el repositorio
@@ -128,13 +159,124 @@ cd TalentGuard
 
 # 2. Crear y activar entorno virtual
 python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# venv\Scripts\activate   # Windows
+source venv/bin/activate    # Linux/macOS
+# venv\Scripts\activate     # Windows
 
 # 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Ejecutar Jupyter Notebook
-jupyter notebook notebooks/01_exploracion.ipynb
+# 4. Ejecutar el dashboard (Componente 3)
+streamlit run app_final.py
+# Abre http://localhost:8501
+
+# 5. (Opcional) Reentrenar el modelo
+python src/ml/entrenar_modelo.py
+
+# 6. (Opcional) Explorar notebooks
+jupyter notebook notebooks/
 ```
 
+### Documentación Web
+
+La documentación completa del proyecto está publicada en GitHub Pages:
+
+🔗 **https://nickgv.github.io/TalentGuard/**
+
+Para ejecutarla localmente:
+```bash
+pip install mkdocs-material
+mkdocs serve
+# Abre http://127.0.0.1:8000
+```
+
+---
+
+## Resultados del Modelo
+
+### Modelo seleccionado: **Logistic Regression**
+
+| Métrica | Valor |
+|---------|-------|
+| **F1-macro** (principal) | **0.6611** |
+| F1-Yes (clase abandono) | 0.4733 |
+| Accuracy | 0.7653 |
+| Precision (macro) | 0.6464 |
+| Recall (macro) | 0.7225 |
+| ROC-AUC | 0.7986 |
+
+### Comparación con Random Forest
+
+| Modelo | F1-macro | F1-Yes | ROC-AUC |
+|--------|----------|--------|---------|
+| **Logistic Regression** | **0.6611** | 0.4733 | **0.7986** |
+| Random Forest | 0.6135 | 0.3243 | 0.7793 |
+
+### Interpretación de resultados
+
+- El modelo detecta correctamente **2 de cada 3** empleados que realmente van a abandonar (recall de 0.66 en clase Yes).
+- El F1-Yes (0.47) es estructuralmente más bajo debido al desbalance 84/16: con solo 47 casos de abandono en test, cada error tiene un impacto desproporcionado.
+- `class_weight='balanced'` prioriza el recall sobre la precisión, que es la estrategia correcta para retención de talento: es mejor tener una conversación innecesaria (falso positivo) que perder a un empleado sin haber intentado retenerlo (falso negativo).
+
+---
+
+## Consideraciones Éticas
+
+TalentGuard está diseñado como una **herramienta de apoyo a la retención de talento**, no como un sistema de evaluación automática de personal.
+
+### Principios guía
+
+1. **El resultado es una estimación**, no una decisión automática.
+2. **La decisión final** es responsabilidad exclusiva del área de Recursos Humanos.
+3. **El modelo puede equivocarse**: 1 de cada 2 empleados con riesgo de abandono podría no ser detectado (F1-Yes de 0.47).
+4. **Los datos son sintéticos**: el modelo fue entrenado con datos generados artificialmente, no con datos reales del sector.
+
+### Mitigaciones implementadas
+
+- Advertencia ética visible en el dashboard.
+- Interpretación en lenguaje natural (no solo un número).
+- Transparencia en factores de riesgo que contribuyen a la predicción.
+- Métricas reportadas honestamente, incluyendo limitaciones.
+
+Para el análisis completo, ver [`docs/reflexion_etica.md`](docs/reflexion_etica.md).
+
+---
+
+## Tecnologías Utilizadas
+
+| Tecnología | Versión | Propósito |
+|-----------|---------|-----------|
+| Python | 3.12 | Lenguaje principal |
+| pandas | 2.1.4 | Manipulación de datos |
+| numpy | 1.26.2 | Operaciones numéricas |
+| scikit-learn | 1.3.2 | Modelado y pipelines |
+| joblib | 1.3.2 | Serialización del modelo |
+| Streamlit | 1.29.0 | Dashboard web |
+| matplotlib | 3.8.2 | Visualización |
+| seaborn | 0.13.0 | Visualización estadística |
+| MkDocs Material | 9.5.27 | Documentación web |
+| Git / GitHub | — | Control de versiones |
+
+---
+
+## Resultados de Aprendizaje
+
+Durante el desarrollo de este proyecto integrador se aplicaron los siguientes conocimientos:
+
+- **Semana 1:** Formulación del problema analítico y selección del dataset
+- **Semana 2:** Pipeline de limpieza, EDA, codificación de variables y diccionario de datos
+- **Semana 3:** Modelado ML, comparación de algoritmos, serialización y dashboard Streamlit
+- **Semana 4:** Documentación técnica, arquitectura, reflexión ética y presentación final
+
+---
+
+## Autor
+
+**Nicolas Gomez**  
+Tecnología en Desarrollo de Software  
+Diplomado en Desarrollo Web para Analítica de Datos  
+Junio 2026
+
+---
+
+[![Documentación](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://nickgv.github.io/TalentGuard/)
+[![Dataset](https://img.shields.io/badge/dataset-Kaggle-20BEFF)](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset)
