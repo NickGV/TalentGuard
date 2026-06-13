@@ -91,55 +91,113 @@ El modelo serializado responde directamente la pregunta analítica del proyecto 
 
 ---
 
+## Arquitectura de la Solución
+
+El sistema se organiza en cuatro capas que transforman el dataset crudo en un dashboard interactivo de predicción:
+
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│   DATOS      │    │  PIPELINE    │    │  MODELO ML       │    │  DASHBOARD       │
+│   CRUDOS     │───▶│  DE ETL      │───▶│  (Pipeline       │───▶│  STREAMLIT       │
+│  data/raw/   │    │ 02_EDA_      │    │   sklearn)       │    │  app_final.py    │
+│              │    │ limpieza     │    │  .pkl + JSON     │    │  tabs + filtros  │
+└──────────────┘    └──────────────┘    └──────────────────┘    └──────────────────┘
+```
+
+Para el detalle completo, ver la página de [Arquitectura](arquitectura.md).
+
+---
+
 ## Estructura del Repositorio
 
 ```
 TalentGuard/
+├── README.md
+├── .gitignore
+├── requirements.txt               ← Dependencias con versiones fijas
+├── app_final.py                   ← Dashboard Streamlit
+│
 ├── data/
-│   ├── raw/
+│   ├── raw/                       ← Dataset original sin modificar
 │   │   └── WA_Fn-UseC_-HR-Employee-Attrition.csv
-│   └── processed/
-│       ├── dataset_limpio.csv
-│       ├── X_train.csv
-│       ├── X_test.csv
+│   └── processed/                 ← Dataset limpio listo para modelado
+│       ├── dataset_limpio.csv     ← 1.470 registros × 44 columnas
+│       ├── X_train.csv            ← 1.176 registros (80%)
+│       ├── X_test.csv             ← 294 registros (20%)
 │       ├── y_train.csv
 │       └── y_test.csv
+│
 ├── notebooks/
-│   ├── 01_exploracion.ipynb
-│   ├── 02_eda_limpieza.ipynb
-│   └── 03_modelado.ipynb
-├── models/
-│   ├── modelo_final.pkl
-│   └── model_metadata.json
+│   ├── 01_exploracion.ipynb       ← Análisis exploratorio inicial
+│   ├── 02_eda_limpieza.ipynb      ← Pipeline de limpieza y preparación
+│   └── 03_modelado.ipynb          ← Experimentación y selección del modelo
+│
 ├── src/
 │   └── ml/
-│       └── entrenar_modelo.py
-├── docs/
+│       └── entrenar_modelo.py     ← Script de entrenamiento reproducible
+│
+├── models/
+│   ├── modelo_final.pkl           ← Pipeline serializado (StandardScaler + LR)
+│   └── model_metadata.json        ← Métricas y metadatos del modelo
+│
+├── charts/                        ← Gráficos generados por los notebooks
+│   ├── fig_attrition_distribucion.png
+│   ├── fig_comparacion_modelos.png
+│   ├── fig_curva_roc.png
+│   ├── fig_matriz_confusion.png
+│   ├── fig_feature_importance.png
+│   ├── fig_overtime_attrition.png
+│   ├── fig_income_attrition.png
+│   ├── fig_years_attrition.png
+│   ├── fig_jobsatisfaction_attrition.png
+│   ├── fig_worklife_attrition.png
+│   └── fig_correlacion_attrition.png
+│
+├── docs/                          ← Documentación técnica
 │   ├── ficha_proyecto.md
 │   ├── analisis_dataset.md
 │   ├── diccionario_datos.md
-│   ├── arquitectura.md            ← en desarrollo
-│   └── wireframe_dashboard.png
-├── app_final.py                   ← en desarrollo
-├── .gitignore
-├── requirements.txt
-└── README.md
+│   ├── arquitectura.md
+│   ├── reflexion_etica.md
+│   ├── wireframe_dashboard.png
+│   └── charts/
+│
+└── .github/
+    └── workflows/
+        └── deploy-docs.yml        ← CI/CD para GitHub Pages
 ```
 
 ---
 
 ## Tecnologías Utilizadas
 
-- Python 3.x
-- pandas, numpy
-- matplotlib, seaborn
-- scikit-learn (train_test_split, LabelEncoder, Pipeline)
-- joblib (serialización del modelo)
-- Streamlit (dashboard web)
-- Jupyter Notebook
-- Git / GitHub
-- MkDocs Material (documentación web)
-- **Diseño UI:** [Stitch by Google](https://stitch.withgoogle.com/)
+| Tecnología | Versión | Propósito |
+|-----------|---------|-----------|
+| Python | 3.12 | Lenguaje principal |
+| pandas | 2.1.4 | Manipulación de datos |
+| numpy | 1.26.2 | Operaciones numéricas |
+| scikit-learn | 1.3.2 | Modelado, pipelines, métricas |
+| joblib | 1.3.2 | Serialización del modelo |
+| Streamlit | 1.29.0 | Dashboard web interactivo |
+| matplotlib | 3.8.2 | Visualización de datos |
+| seaborn | 0.13.0 | Visualización estadística |
+| MkDocs Material | 9.5.27 | Documentación web |
+| Git / GitHub | — | Control de versiones y CI/CD |
+
+---
+
+## Consideraciones Éticas
+
+TalentGuard está diseñado como una **herramienta de apoyo a la retención de talento**, no como un sistema de evaluación o clasificación automática de personal. Principios fundamentales:
+
+1. **El resultado es una estimación**, no una decisión automática.
+2. **La decisión final** es responsabilidad exclusiva del área de Recursos Humanos.
+3. **El modelo puede equivocarse**: el F1 para la clase de abandono (Yes) es de 0.47, lo que significa que aproximadamente 1 de cada 2 empleados en riesgo podría no ser detectado.
+4. **Los datos son sintéticos**: fueron generados por IBM, no provienen de una empresa real del sector construcción.
+
+El dashboard incluye una advertencia ética visible y el resultado se presenta siempre con interpretación en lenguaje natural, no como un número aislado.
+
+Para el análisis completo, ver la página de [Reflexión Ética](reflexion_etica.md).
 
 ---
 
@@ -158,18 +216,13 @@ source venv/bin/activate  # Linux/macOS
 # 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Exploración inicial
-jupyter notebook notebooks/01_exploracion.ipynb
+# 4. Ejecutar el dashboard
+streamlit run app_final.py
+# Abre http://localhost:8501
 
-# 5. Pipeline de limpieza
-jupyter notebook notebooks/02_eda_limpieza.ipynb
-
-# 6. Modelado y serialización (notebook interactivo)
-jupyter notebook notebooks/03_modelado.ipynb
-
-# 6b. O bien, entrenar desde terminal (reproduce el mismo resultado)
+# 5. (Opcional) Reentrenar el modelo desde terminal
 python src/ml/entrenar_modelo.py
 
-# 7. Dashboard
-streamlit run app_final.py
+# 6. (Opcional) Explorar notebooks
+jupyter notebook notebooks/
 ```
