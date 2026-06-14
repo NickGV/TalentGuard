@@ -62,21 +62,29 @@ Para la lista completa de las 44 columnas del dataset procesado, consultar [`doc
 
 ## Arquitectura de la Solución
 
-El sistema sigue una arquitectura de 4 capas:
+El sistema sigue una arquitectura de 5 capas, más una API REST opcional:
 
 ```
-┌──────────────┐    ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│   DATOS      │    │  PIPELINE    │    │  MODELO ML       │    │  DASHBOARD       │
-│   CRUDOS     │───▶│  DE ETL      │───▶│  (Pipeline       │───▶│  STREAMLIT       │
-│  data/raw/   │    │ 02_EDA_      │    │   sklearn)       │    │  app_final.py    │
-│              │    │ limpieza     │    │  .pkl + JSON     │    │  tabs + filtros  │
-└──────────────┘    └──────────────┘    └──────────────────┘    └──────────────────┘
+┌──────────────┐    ┌──────────────┐    ┌──────────────────┐    ┌──────────────────────┐
+│   DATOS      │    │  PIPELINE    │    │  MODELO ML       │    │  DASHBOARD           │
+│   CRUDOS     │───▶│  DE ETL      │───▶│  (Pipeline       │───▶│  STREAMLIT           │
+│  data/raw/   │    │ 02_EDA_      │    │   sklearn)       │    │  app_final.py        │
+│              │    │ limpieza     │    │  .pkl + JSON     │    │  7 secciones + filt. │
+└──────────────┘    └──────────────┘    └──────────────────┘    └──────────────────────┘
+                                                                          │
+                                                                          ▼
+                                                              ┌──────────────────────┐
+                                                              │  API REST (Bonus)    │
+                                                              │  FastAPI             │
+                                                              │  /predict + /docs    │
+                                                              └──────────────────────┘
 ```
 
 1. **Datos:** Dataset original en `data/raw/`, procesado en `data/processed/`
 2. **Pipeline ETL:** Notebook `02_eda_limpieza.ipynb` con limpieza, codificación y split
 3. **Modelo ML:** Logistic Regression con StandardScaler en Pipeline, serializado con joblib
-4. **Dashboard:** Streamlit con análisis exploratorio y predicción interactiva
+4. **Dashboard (obligatorio):** Streamlit con 7 secciones, sidebar, filtros interactivos y factores de riesgo
+5. **API REST (bonificación):** FastAPI expone el modelo como servicio con documentación Swagger en `/docs`
 
 Para el detalle completo, ver [`docs/arquitectura.md`](docs/arquitectura.md).
 
@@ -89,7 +97,13 @@ TalentGuard/
 ├── README.md                      ← Este archivo
 ├── .gitignore
 ├── requirements.txt               ← Dependencias con versiones fijas
-├── app_final.py                   ← Dashboard Streamlit (Componente 3)
+├── app_final.py                   ← Dashboard Streamlit (7 secciones, sidebar)
+├── mkdocs.yml                     ← Configuración documentación web
+│
+├── api/                           ← Bonus: API FastAPI (Ruta A)
+│   ├── __init__.py
+│   ├── main.py                    ← App FastAPI con 6 endpoints + Swagger
+│   └── schemas.py                 ← Modelos Pydantic con validaciones
 │
 ├── data/
 │   ├── raw/                       ← Dataset original sin modificar
@@ -165,14 +179,18 @@ source venv/bin/activate    # Linux/macOS
 # 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Ejecutar el dashboard (Componente 3)
+# 4. Ejecutar el dashboard (obligatorio)
 streamlit run app_final.py
 # Abre http://localhost:8501
 
-# 5. (Opcional) Reentrenar el modelo
+# 5. (Opcional) Ejecutar la API REST (bonificación)
+uvicorn api.main:app --reload
+# Documentación Swagger: http://127.0.0.1:8000/docs
+
+# 6. (Opcional) Reentrenar el modelo
 python src/ml/entrenar_modelo.py
 
-# 6. (Opcional) Explorar notebooks
+# 7. (Opcional) Explorar notebooks
 jupyter notebook notebooks/
 ```
 
@@ -186,7 +204,7 @@ Para ejecutarla localmente:
 ```bash
 pip install mkdocs-material
 mkdocs serve
-# Abre http://127.0.0.1:8000
+# Abre http://127.0.0.1:8008
 ```
 
 ---
@@ -219,6 +237,58 @@ mkdocs serve
 
 ---
 
+## API REST (Bonificación — Ruta A)
+
+TalentGuard expone el modelo de Machine Learning como servicio REST a través de FastAPI, con documentación Swagger interactiva.
+
+### Endpoints
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/` | Información general de la API |
+| `GET` | `/health` | Estado del servicio y versión del modelo |
+| `GET` | `/datos` | Resumen del dataset (filas, tasa de rotación) |
+| `GET` | `/variables` | Lista de 18 campos aceptados por `/predict` |
+| `GET` | `/metricas` | Métricas de evaluación del modelo |
+| `POST` | `/predict` | Predice el riesgo de abandono de un empleado |
+
+### Documentación Swagger
+
+La API incluye documentación interactiva generada automáticamente:
+
+🔗 **http://127.0.0.1:8000/docs**
+
+### Ejemplo de uso
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "Age": 35,
+    "Gender": 1,
+    "MaritalStatus": "Single",
+    "MonthlyIncome": 5000,
+    "OverTime": 1,
+    "JobSatisfaction": 3,
+    "Department": "Sales",
+    "JobRole": "Sales Executive"
+    ...
+  }'
+```
+
+Respuesta:
+```json
+{
+  "probabilidad_abandono": 0.7516,
+  "probabilidad_permanencia": 0.2484,
+  "riesgo": "ALTO",
+  "prediccion": 1,
+  "advertencia": "Estimación estadística basada en patrones históricos..."
+}
+```
+
+---
+
 ## Consideraciones Éticas
 
 TalentGuard está diseñado como una **herramienta de apoyo a la retención de talento**, no como un sistema de evaluación automática de personal.
@@ -246,13 +316,16 @@ Para el análisis completo, ver [`docs/reflexion_etica.md`](docs/reflexion_etica
 | Tecnología | Versión | Propósito |
 |-----------|---------|-----------|
 | Python | 3.12 | Lenguaje principal |
-| pandas | 2.1.4 | Manipulación de datos |
-| numpy | 1.26.2 | Operaciones numéricas |
-| scikit-learn | 1.3.2 | Modelado y pipelines |
-| joblib | 1.3.2 | Serialización del modelo |
-| Streamlit | 1.29.0 | Dashboard web |
-| matplotlib | 3.8.2 | Visualización |
-| seaborn | 0.13.0 | Visualización estadística |
+| pandas | 3.0.3 | Manipulación de datos |
+| numpy | 2.4.6 | Operaciones numéricas |
+| scikit-learn | 1.9.0 | Modelado y pipelines |
+| joblib | 1.5.0 | Serialización del modelo |
+| Streamlit | 1.58.0 | Dashboard web |
+| FastAPI | 0.136.3 | API REST (bonificación) |
+| uvicorn | 0.49.0 | Servidor ASGI para FastAPI |
+| pydantic | 2.13.4 | Validación de datos en API |
+| matplotlib | 3.10.9 | Visualización |
+| seaborn | 0.13.2 | Visualización estadística |
 | MkDocs Material | 9.5.27 | Documentación web |
 | Git / GitHub | — | Control de versiones |
 
@@ -265,7 +338,7 @@ Durante el desarrollo de este proyecto integrador se aplicaron los siguientes co
 - **Semana 1:** Formulación del problema analítico y selección del dataset
 - **Semana 2:** Pipeline de limpieza, EDA, codificación de variables y diccionario de datos
 - **Semana 3:** Modelado ML, comparación de algoritmos, serialización y dashboard Streamlit
-- **Semana 4:** Documentación técnica, arquitectura, reflexión ética y presentación final
+- **Semana 4:** Documentación técnica, arquitectura, reflexión ética, API REST (Ruta A), dashboard con 7 secciones, y presentación final
 
 ---
 
