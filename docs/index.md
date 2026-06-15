@@ -10,13 +10,19 @@
 
 ## Descripción del Proyecto
 
-TalentGuard es una aplicación web analítica orientada a predecir el riesgo de rotación voluntaria de empleados en empresas de construcción e ingeniería. A partir de variables como satisfacción laboral, horas extra, balance vida-trabajo, antigüedad e ingresos mensuales, el sistema clasifica a cada empleado según su probabilidad de abandono (Yes / No), con el fin de apoyar al área de Recursos Humanos en la priorización de estrategias de retención de talento.
+TalentGuard es una aplicación web analítica orientada a predecir el riesgo de rotación voluntaria de empleados. A partir de variables como satisfacción laboral, horas extra, balance vida-trabajo, antigüedad e ingresos mensuales, el sistema clasifica a cada empleado según su probabilidad de abandono (Yes / No), con el fin de apoyar al área de Recursos Humanos en la priorización de estrategias de retención de talento.
+
+El proyecto integra tres aplicaciones:
+
+- **Dashboard Streamlit** — Visualización interactiva y predicción local
+- **API REST (FastAPI)** — Exposición del modelo como servicio
+- **Web App (Next.js)** — Frontend moderno que consume la API
 
 ---
 
 ## Problema
 
-Las organizaciones de construcción e ingeniería enfrentan alta rotación en áreas estratégicas como planeación y gestión de proyectos. Sin una herramienta predictiva, las intervenciones de retención ocurren de forma reactiva, cuando ya es demasiado tarde para revertir la decisión del empleado.
+Las organizaciones enfrentan alta rotación en áreas estratégicas. Sin una herramienta predictiva, las intervenciones de retención ocurren de forma reactiva, cuando ya es demasiado tarde para revertir la decisión del empleado.
 
 ---
 
@@ -43,7 +49,7 @@ Las organizaciones de construcción e ingeniería enfrentan alta rotación en á
 ## Tipo de Tarea y Métrica
 
 - **Tarea:** Clasificación binaria
-- **Métrica principal:** F1-Score
+- **Métrica principal:** F1-Score (macro)
 - **Justificación:** El dataset presenta desbalance de clases (83.9% No / 16.1% Yes), por lo que el F1-Score es más adecuado que el accuracy para evaluar el modelo.
 
 ---
@@ -87,21 +93,28 @@ Se compararon dos algoritmos sobre el conjunto de test (294 registros, split 80/
 
 El modelo detecta **2 de cada 3 empleados** que realmente van a renunciar (recall clase Yes = 0.66). La configuración `class_weight='balanced'` prioriza no perder casos reales de abandono (minimizar falsos negativos), que en el contexto de RRHH es el error más costoso.
 
-El modelo serializado responde directamente la pregunta analítica del proyecto y será cargado por el dashboard sin reentrenamiento en tiempo de ejecución.
-
 ---
 
 ## Arquitectura de la Solución
 
-El sistema se organiza en cuatro capas que transforman el dataset crudo en un dashboard interactivo de predicción:
+El sistema se organiza en tres aplicaciones que comparten el mismo modelo ML:
 
 ```
-┌──────────────┐    ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│   DATOS      │    │  PIPELINE    │    │  MODELO ML       │    │  DASHBOARD       │
-│   CRUDOS     │───▶│  DE ETL      │───▶│  (Pipeline       │───▶│  STREAMLIT       │
-│  data/raw/   │    │ 02_EDA_      │    │   sklearn)       │    │  app_final.py    │
-│              │    │ limpieza     │    │  .pkl + JSON     │    │  tabs + filtros  │
-└──────────────┘    └──────────────┘    └──────────────────┘    └──────────────────┘
+┌──────────────┐    ┌──────────────┐    ┌──────────────────┐
+│   DATOS      │    │  PIPELINE    │    │  MODELO ML       │
+│   CRUDOS     │───▶│  DE ETL      │───▶│  (Pipeline       │
+│  data/raw/   │    │ 02_EDA_      │    │   sklearn)       │
+│              │    │ limpieza     │    │  .pkl + JSON     │
+└──────────────┘    └──────────────┘    └────────┬─────────┘
+                                                  │
+                    ┌─────────────────────────────┼─────────────┐
+                    │                             │             │
+                    ▼                             ▼             ▼
+        ┌──────────────────┐    ┌──────────────────┐    ┌──────────────┐
+        │  DASHBOARD       │    │  API REST        │    │  WEB APP     │
+        │  STREAMLIT       │    │  FastAPI         │    │  Next.js     │
+        │  :8501           │    │  :8000           │    │  :3000       │
+        └──────────────────┘    └──────────────────┘    └──────────────┘
 ```
 
 Para el detalle completo, ver la página de [Arquitectura](arquitectura.md).
@@ -114,75 +127,120 @@ Para el detalle completo, ver la página de [Arquitectura](arquitectura.md).
 TalentGuard/
 ├── README.md
 ├── .gitignore
-├── requirements.txt               ← Dependencias con versiones fijas
+├── requirements.txt               ← Dependencias Python
 ├── app_final.py                   ← Dashboard Streamlit
 │
+├── api/                           ← API REST (FastAPI)
+│   ├── main.py                    ← 6 endpoints + Swagger
+│   └── schemas.py                 ← Modelos Pydantic
+│
+├── web/                           ← Frontend (Next.js + TypeScript)
+│   ├── .env.local
+│   ├── package.json
+│   ├── src/
+│   │   ├── app/                   ← 6 páginas (App Router)
+│   │   ├── components/            ← Navbar, KPIs, shadcn/ui
+│   │   └── lib/                   ← API client + types
+│   └── public/
+│       └── datos.json             ← Dataset para charts
+│
 ├── data/
-│   ├── raw/                       ← Dataset original sin modificar
-│   │   └── WA_Fn-UseC_-HR-Employee-Attrition.csv
-│   └── processed/                 ← Dataset limpio listo para modelado
-│       ├── dataset_limpio.csv     ← 1.470 registros × 44 columnas
-│       ├── X_train.csv            ← 1.176 registros (80%)
-│       ├── X_test.csv             ← 294 registros (20%)
-│       ├── y_train.csv
-│       └── y_test.csv
+│   ├── raw/                       ← Dataset original
+│   └── processed/                 ← Dataset limpio
 │
 ├── notebooks/
-│   ├── 01_exploracion.ipynb       ← Análisis exploratorio inicial
-│   ├── 02_eda_limpieza.ipynb      ← Pipeline de limpieza y preparación
-│   └── 03_modelado.ipynb          ← Experimentación y selección del modelo
+│   ├── 01_exploracion.ipynb       ← EDA inicial
+│   ├── 02_eda_limpieza.ipynb      ← Pipeline de limpieza
+│   └── 03_modelado.ipynb          ← Experimentación
 │
 ├── src/
 │   └── ml/
-│       └── entrenar_modelo.py     ← Script de entrenamiento reproducible
+│       └── entrenar_modelo.py     ← Script de entrenamiento
 │
 ├── models/
-│   ├── modelo_final.pkl           ← Pipeline serializado (StandardScaler + LR)
-│   └── model_metadata.json        ← Métricas y metadatos del modelo
+│   ├── modelo_final.pkl           ← Pipeline serializado
+│   └── model_metadata.json        ← Métricas y metadatos
 │
-├── charts/                        ← Gráficos generados por los notebooks
-│   ├── fig_attrition_distribucion.png
-│   ├── fig_comparacion_modelos.png
-│   ├── fig_curva_roc.png
-│   ├── fig_matriz_confusion.png
-│   ├── fig_feature_importance.png
-│   ├── fig_overtime_attrition.png
-│   ├── fig_income_attrition.png
-│   ├── fig_years_attrition.png
-│   ├── fig_jobsatisfaction_attrition.png
-│   ├── fig_worklife_attrition.png
-│   └── fig_correlacion_attrition.png
-│
+├── charts/                        ← Gráficos generados
 ├── docs/                          ← Documentación técnica
-│   ├── ficha_proyecto.md
-│   ├── analisis_dataset.md
-│   ├── diccionario_datos.md
-│   ├── arquitectura.md
-│   ├── reflexion_etica.md
-│   ├── wireframe_dashboard.png
-│   └── charts/
-│
 └── .github/
     └── workflows/
-        └── deploy-docs.yml        ← CI/CD para GitHub Pages
+        └── deploy-docs.yml        ← CI/CD GitHub Pages
 ```
 
 ---
 
 ## Tecnologías Utilizadas
 
+### Backend (Python)
+
 | Tecnología | Versión | Propósito |
 |-----------|---------|-----------|
 | Python | 3.12 | Lenguaje principal |
-| pandas | 2.1.4 | Manipulación de datos |
-| numpy | 1.26.2 | Operaciones numéricas |
-| scikit-learn | 1.3.2 | Modelado, pipelines, métricas |
-| joblib | 1.3.2 | Serialización del modelo |
-| Streamlit | 1.29.0 | Dashboard web interactivo |
-| matplotlib | 3.8.2 | Visualización de datos |
-| seaborn | 0.13.0 | Visualización estadística |
-| MkDocs Material | 9.5.27 | Documentación web |
+| pandas | 3.0.3 | Manipulación de datos |
+| numpy | 2.4.6 | Operaciones numéricas |
+| scikit-learn | 1.9.0 | Modelado y pipelines |
+| joblib | 1.5.0 | Serialización del modelo |
+| Streamlit | 1.58.0 | Dashboard web |
+| FastAPI | 0.136.3 | API REST |
+| uvicorn | 0.49.0 | Servidor ASGI |
+| pydantic | 2.13.4 | Validación de datos |
+| matplotlib | 3.10.9 | Visualización |
+| seaborn | 0.13.2 | Visualización estadística |
+
+### Frontend (Web)
+
+| Tecnología | Versión | Propósito |
+|-----------|---------|-----------|
+| Next.js | 16.2.9 | Framework React |
+| TypeScript | 5.x | Tipado estático |
+| Tailwind CSS | 4.x | Estilos utilitarios |
+| shadcn/ui | 4.x | Componentes de UI |
+| Recharts | 2.x | Gráficos interactivos |
+
+### Documentación
+
+| Tecnología | Versión | Propósito |
+|-----------|---------|-----------|
+| MkDocs Material | 9.5.27 | Sitio web de documentación |
 | Git / GitHub | — | Control de versiones y CI/CD |
+
+---
+
+## Cómo Ejecutar
+
+### Backend (Python)
+
+```bash
+# Clonar y preparar
+git clone https://github.com/NickGV/TalentGuard.git
+cd TalentGuard
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Dashboard Streamlit
+streamlit run app_final.py          # http://localhost:8501
+
+# API REST (en otra terminal)
+uvicorn api.main:app --reload       # http://localhost:8000/docs
+```
+
+### Frontend Next.js
+
+```bash
+# En otra terminal
+cd web
+npm install
+npm run dev                         # http://localhost:3000
+```
+
+### Documentación
+
+```bash
+pip install mkdocs-material
+mkdocs serve                        # http://localhost:8008
+```
 
 ---
 
@@ -195,34 +253,6 @@ TalentGuard está diseñado como una **herramienta de apoyo a la retención de t
 3. **El modelo puede equivocarse**: el F1 para la clase de abandono (Yes) es de 0.47, lo que significa que aproximadamente 1 de cada 2 empleados en riesgo podría no ser detectado.
 4. **Los datos son sintéticos**: fueron generados por IBM, no provienen de una empresa real del sector construcción.
 
-El dashboard incluye una advertencia ética visible y el resultado se presenta siempre con interpretación en lenguaje natural, no como un número aislado.
+El dashboard, la API y el frontend web incluyen advertencias éticas visibles y el resultado se presenta siempre con interpretación en lenguaje natural, no como un número aislado.
 
 Para el análisis completo, ver la página de [Reflexión Ética](reflexion_etica.md).
-
----
-
-## Cómo Ejecutar
-
-```bash
-# 1. Clonar el repositorio
-git clone https://github.com/NickGV/TalentGuard.git
-cd TalentGuard
-
-# 2. Crear y activar entorno virtual
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# venv\Scripts\activate   # Windows
-
-# 3. Instalar dependencias
-pip install -r requirements.txt
-
-# 4. Ejecutar el dashboard
-streamlit run app_final.py
-# Abre http://localhost:8501
-
-# 5. (Opcional) Reentrenar el modelo desde terminal
-python src/ml/entrenar_modelo.py
-
-# 6. (Opcional) Explorar notebooks
-jupyter notebook notebooks/
-```

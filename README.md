@@ -11,15 +11,21 @@
 
 ## Descripción
 
-TalentGuard es una aplicación web analítica orientada a predecir el riesgo de rotación voluntaria de empleados en empresas de construcción e ingeniería. A partir de variables como satisfacción laboral, horas extra, balance vida-trabajo, antigüedad e ingresos mensuales, el sistema clasifica a cada empleado según su probabilidad de abandono (Yes / No), con el fin de apoyar al área de Recursos Humanos en la priorización de estrategias de retención de talento.
+TalentGuard es una aplicación web analítica orientada a predecir el riesgo de rotación voluntaria de empleados. A partir de variables como satisfacción laboral, horas extra, balance vida-trabajo, antigüedad e ingresos mensuales, el sistema clasifica a cada empleado según su probabilidad de abandono (Yes / No), con el fin de apoyar al área de Recursos Humanos en la priorización de estrategias de retención de talento.
 
-El proyecto integra un pipeline de limpieza de datos, un modelo de clasificación binaria (Logistic Regression) y un dashboard interactivo desarrollado con Streamlit.
+El proyecto integra tres aplicaciones principales:
+
+| Aplicación | Tecnología | Propósito |
+|-----------|-----------|-----------|
+| **Dashboard** | Streamlit | Visualización interactiva de datos y predicciones |
+| **API REST** | FastAPI | Exposición del modelo ML como servicio |
+| **Web App** | Next.js + TypeScript + Tailwind | Frontend moderno que consume la API |
 
 ---
 
 ## Pregunta Analítica
 
-> ¿Es posible clasificar el riesgo de abandono voluntario (`Attrition`: Yes/No) de un empleado en una empresa de construcción e ingeniería, a partir de variables como satisfacción laboral, horas extra (`OverTime`), balance vida-trabajo, antigüedad e ingresos mensuales, con el fin de apoyar la identificación temprana de colaboradores con alta probabilidad de abandono y priorizar estrategias de retención por parte del área de Recursos Humanos?
+> ¿Es posible clasificar el riesgo de abandono voluntario (`Attrition`: Yes/No) de un empleado a partir de variables como satisfacción laboral, horas extra (`OverTime`), balance vida-trabajo, antigüedad e ingresos mensuales, con el fin de apoyar la identificación temprana de colaboradores con alta probabilidad de abandono y priorizar estrategias de retención por parte del área de Recursos Humanos?
 
 ---
 
@@ -35,19 +41,6 @@ El proyecto integra un pipeline de limpieza de datos, un modelo de clasificació
 | **Variable objetivo** | `Attrition` (Yes / No)                                                                     |
 | **Desbalance**        | 83.9% No — 16.1% Yes                                                                       |
 
-### Variables principales
-
-| Variable | Tipo | Descripción |
-|----------|------|-------------|
-| `OverTime` | Binaria | Horas extra (Yes/No) |
-| `JobSatisfaction` | Ordinal (1-4) | Satisfacción laboral |
-| `WorkLifeBalance` | Ordinal (1-4) | Balance vida-trabajo |
-| `MonthlyIncome` | Numérica | Ingreso mensual (USD) |
-| `YearsAtCompany` | Numérica | Antigüedad en la empresa |
-| `EnvironmentSatisfaction` | Ordinal (1-4) | Satisfacción con el entorno |
-| `Department` | Categórica | Departamento |
-| `Age` | Numérica | Edad del empleado |
-
 Para la lista completa de las 44 columnas del dataset procesado, consultar [`docs/diccionario_datos.md`](docs/diccionario_datos.md).
 
 ---
@@ -62,29 +55,35 @@ Para la lista completa de las 44 columnas del dataset procesado, consultar [`doc
 
 ## Arquitectura de la Solución
 
-El sistema sigue una arquitectura de 5 capas, más una API REST opcional:
+El sistema sigue una arquitectura de 3 aplicaciones que comparten el mismo modelo ML:
 
 ```
-┌──────────────┐    ┌──────────────┐    ┌──────────────────┐    ┌──────────────────────┐
-│   DATOS      │    │  PIPELINE    │    │  MODELO ML       │    │  DASHBOARD           │
-│   CRUDOS     │───▶│  DE ETL      │───▶│  (Pipeline       │───▶│  STREAMLIT           │
-│  data/raw/   │    │ 02_EDA_      │    │   sklearn)       │    │  app_final.py        │
-│              │    │ limpieza     │    │  .pkl + JSON     │    │  7 secciones + filt. │
-└──────────────┘    └──────────────┘    └──────────────────┘    └──────────────────────┘
-                                                                          │
-                                                                          ▼
-                                                              ┌──────────────────────┐
-                                                              │  API REST (Bonus)    │
-                                                              │  FastAPI             │
-                                                              │  /predict + /docs    │
-                                                              └──────────────────────┘
+┌──────────────┐    ┌──────────────┐    ┌──────────────────┐
+│   DATOS      │    │  PIPELINE    │    │  MODELO ML       │
+│   CRUDOS     │───▶│  DE ETL      │───▶│  (Pipeline       │
+│  data/raw/   │    │ 02_EDA_      │    │   sklearn)       │
+│              │    │ limpieza     │    │  .pkl + JSON     │
+└──────────────┘    └──────────────┘    └────────┬─────────┘
+                                                  │
+                    ┌─────────────────────────────┼─────────────────────┐
+                    │                             │                     │
+                    ▼                             ▼                     ▼
+        ┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────────┐
+        │  DASHBOARD STREAMLIT │    │  API REST (FastAPI)  │    │  WEB APP         │
+        │  app_final.py        │    │  api/                │    │  web/ (Next.js)  │
+        │  7 secciones + filt. │    │  6 endpoints + /docs │    │  6 páginas       │
+        │  :8501              │    │  :8000               │    │  :3000           │
+        └──────────────────────┘    └──────────────────────┘    └──────────────────┘
 ```
+
+### Capas del sistema
 
 1. **Datos:** Dataset original en `data/raw/`, procesado en `data/processed/`
 2. **Pipeline ETL:** Notebook `02_eda_limpieza.ipynb` con limpieza, codificación y split
 3. **Modelo ML:** Logistic Regression con StandardScaler en Pipeline, serializado con joblib
-4. **Dashboard (obligatorio):** Streamlit con 7 secciones, sidebar, filtros interactivos y factores de riesgo
-5. **API REST (bonificación):** FastAPI expone el modelo como servicio con documentación Swagger en `/docs`
+4. **Dashboard (Streamlit):** 7 secciones, sidebar, filtros interactivos y predicción
+5. **API REST (FastAPI):** Expone el modelo como servicio con documentación Swagger en `/docs`
+6. **Web App (Next.js):** Frontend moderno con TypeScript, Tailwind y Recharts
 
 Para el detalle completo, ver [`docs/arquitectura.md`](docs/arquitectura.md).
 
@@ -96,19 +95,42 @@ Para el detalle completo, ver [`docs/arquitectura.md`](docs/arquitectura.md).
 TalentGuard/
 ├── README.md                      ← Este archivo
 ├── .gitignore
-├── requirements.txt               ← Dependencias con versiones fijas
+├── requirements.txt               ← Dependencias Python con versiones fijas
 ├── app_final.py                   ← Dashboard Streamlit (7 secciones, sidebar)
 ├── mkdocs.yml                     ← Configuración documentación web
 │
-├── api/                           ← Bonus: API FastAPI (Ruta A)
+├── api/                           ← API REST: FastAPI (Ruta A)
 │   ├── __init__.py
 │   ├── main.py                    ← App FastAPI con 6 endpoints + Swagger
 │   └── schemas.py                 ← Modelos Pydantic con validaciones
 │
+├── web/                           ← Frontend: Next.js + TypeScript + Tailwind
+│   ├── .env.local                 ← URL de la API
+│   ├── package.json
+│   ├── src/
+│   │   ├── app/                   ← 6 páginas (App Router)
+│   │   │   ├── page.tsx           ←  Inicio (hero + KPIs)
+│   │   │   ├── data/page.tsx      ←  Datos (diccionario de variables)
+│   │   │   ├── insights/page.tsx  ←  Análisis (5 charts + filtros)
+│   │   │   ├── predict/page.tsx   ←  Predicción (form + resultados)
+│   │   │   ├── model/page.tsx     ←  Métricas del modelo
+│   │   │   └── about/page.tsx     ←  Acerca del proyecto
+│   │   ├── components/
+│   │   │   ├── navbar.tsx         ←  Barra de navegación responsive
+│   │   │   ├── kpi-card.tsx       │  Componente de KPI
+│   │   │   └── ui/               ←  shadcn/ui components
+│   │   └── lib/
+│   │       ├── api.ts             ←  Cliente FastAPI
+│   │       └── types.ts           ←  Tipos TypeScript
+│   └── public/
+│       └── datos.json             ← Dataset estático para charts
+│
 ├── data/
 │   ├── raw/                       ← Dataset original sin modificar
+│   │   ├── README.md
 │   │   └── WA_Fn-UseC_-HR-Employee-Attrition.csv
 │   └── processed/                 ← Dataset limpio listo para modelado
+│       ├── README.md
 │       ├── dataset_limpio.csv     ← 1.470 registros × 44 columnas
 │       ├── X_train.csv            ← 1.176 registros (80%)
 │       ├── X_test.csv             ← 294 registros (20%)
@@ -162,84 +184,86 @@ TalentGuard/
 ### Requisitos
 
 - Python 3.10+
+- Node.js 18+
+- npm
 - pip
 
-### Pasos
+### 1. Backend (Python)
 
 ```bash
-# 1. Clonar el repositorio
+# Clonar el repositorio
 git clone https://github.com/NickGV/TalentGuard.git
 cd TalentGuard
 
-# 2. Crear y activar entorno virtual
+# Crear y activar entorno virtual
 python -m venv venv
 source venv/bin/activate    # Linux/macOS
 # venv\Scripts\activate     # Windows
 
-# 3. Instalar dependencias
+# Instalar dependencias Python
 pip install -r requirements.txt
-
-# 4. Ejecutar el dashboard (obligatorio)
-streamlit run app_final.py
-# Abre http://localhost:8501
-
-# 5. (Opcional) Ejecutar la API REST (bonificación)
-uvicorn api.main:app --reload
-# Documentación Swagger: http://127.0.0.1:8000/docs
-
-# 6. (Opcional) Reentrenar el modelo
-python src/ml/entrenar_modelo.py
-
-# 7. (Opcional) Explorar notebooks
-jupyter notebook notebooks/
 ```
 
-### Documentación Web
+### 2. Dashboard Streamlit
 
-La documentación completa del proyecto está publicada en GitHub Pages:
+```bash
+# Desde la raíz del proyecto (entorno virtual activado)
+streamlit run app_final.py
+# Abre http://localhost:8501
+```
 
-🔗 **https://nickgv.github.io/TalentGuard/**
+### 3. API REST (FastAPI)
 
-Para ejecutarla localmente:
+```bash
+# Desde la raíz del proyecto (entorno virtual activado)
+uvicorn api.main:app --reload
+# Documentación Swagger: http://127.0.0.1:8000/docs
+```
+
+### 4. Frontend Web (Next.js)
+
+```bash
+# Desde la raíz del proyecto
+cd web
+
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
+# Abre http://localhost:3000
+```
+
+> **Nota:** El frontend necesita la API corriendo en `http://127.0.0.1:8000`. La URL se configura en `web/.env.local`.
+
+### 5. Documentación Web (MkDocs)
+
 ```bash
 pip install mkdocs-material
 mkdocs serve
 # Abre http://127.0.0.1:8008
 ```
 
----
+### Resumen de puertos
 
-## Resultados del Modelo
+| Aplicación | Puerto | URL |
+|-----------|--------|-----|
+| Dashboard Streamlit | 8501 | http://localhost:8501 |
+| API REST (FastAPI) | 8000 | http://localhost:8000 |
+| Frontend Next.js | 3000 | http://localhost:3000 |
+| Documentación MkDocs | 8008 | http://localhost:8008 |
 
-### Modelo seleccionado: **Logistic Regression**
+### (Opcional) Reentrenar el modelo
 
-| Métrica | Valor |
-|---------|-------|
-| **F1-macro** (principal) | **0.6611** |
-| F1-Yes (clase abandono) | 0.4733 |
-| Accuracy | 0.7653 |
-| Precision (macro) | 0.6464 |
-| Recall (macro) | 0.7225 |
-| ROC-AUC | 0.7986 |
-
-### Comparación con Random Forest
-
-| Modelo | F1-macro | F1-Yes | ROC-AUC |
-|--------|----------|--------|---------|
-| **Logistic Regression** | **0.6611** | 0.4733 | **0.7986** |
-| Random Forest | 0.6135 | 0.3243 | 0.7793 |
-
-### Interpretación de resultados
-
-- El modelo detecta correctamente **2 de cada 3** empleados que realmente van a abandonar (recall de 0.66 en clase Yes).
-- El F1-Yes (0.47) es estructuralmente más bajo debido al desbalance 84/16: con solo 47 casos de abandono en test, cada error tiene un impacto desproporcionado.
-- `class_weight='balanced'` prioriza el recall sobre la precisión, que es la estrategia correcta para retención de talento: es mejor tener una conversación innecesaria (falso positivo) que perder a un empleado sin haber intentado retenerlo (falso negativo).
+```bash
+python src/ml/entrenar_modelo.py
+```
 
 ---
 
 ## API REST (Bonificación — Ruta A)
 
-TalentGuard expone el modelo de Machine Learning como servicio REST a través de FastAPI, con documentación Swagger interactiva.
+TalentGuard expone el modelo de Machine Learning como servicio REST a través de FastAPI, con documentación Swagger interactiva. Esta API es consumida por el frontend Next.js.
 
 ### Endpoints
 
@@ -271,7 +295,7 @@ curl -X POST http://127.0.0.1:8000/predict \
     "OverTime": 1,
     "JobSatisfaction": 3,
     "Department": "Sales",
-    "JobRole": "Sales Executive"
+    "JobRole": "Sales Executive",
     ...
   }'
 ```
@@ -289,6 +313,62 @@ Respuesta:
 
 ---
 
+## Frontend Web (Next.js)
+
+El frontend moderno consume la API REST y ofrece las mismas funcionalidades que el dashboard Streamlit, pero con una interfaz mejorada.
+
+### Páginas
+
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Inicio con KPIs principales y CTA |
+| `/data` | Dataset y diccionario de variables |
+| `/insights` | 5 visualizaciones interactivas con filtros |
+| `/predict` | Formulario de 18 campos + resultado con indicador de riesgo |
+| `/model` | Métricas del modelo con gráfico comparativo |
+| `/about` | Hallazgos, limitaciones y advertencia ética |
+
+### Tecnologías
+
+| Tecnología | Versión | Propósito |
+|-----------|---------|-----------|
+| Next.js | 16.2.9 | Framework React con App Router |
+| TypeScript | 5.x | Tipado estático |
+| Tailwind CSS | 4.x | Estilos utilitarios |
+| shadcn/ui | 4.x | Componentes de UI accesibles |
+| Recharts | 2.x | Visualizaciones y gráficos interactivos |
+| React Hook Form | + Zod | Formularios con validación |
+
+---
+
+## Resultados del Modelo
+
+### Modelo seleccionado: **Logistic Regression**
+
+| Métrica | Valor |
+|---------|-------|
+| **F1-macro** (principal) | **0.6611** |
+| F1-Yes (clase abandono) | 0.4733 |
+| Accuracy | 0.7653 |
+| Precision (macro) | 0.6464 |
+| Recall (macro) | 0.7225 |
+| ROC-AUC | 0.7986 |
+
+### Comparación con Random Forest
+
+| Modelo | F1-macro | F1-Yes | ROC-AUC |
+|--------|----------|--------|---------|
+| **Logistic Regression** | **0.6611** | 0.4733 | **0.7986** |
+| Random Forest | 0.6135 | 0.3243 | 0.7793 |
+
+### Interpretación de resultados
+
+- El modelo detecta correctamente **2 de cada 3** empleados que realmente van a abandonar (recall de 0.66 en clase Yes).
+- El F1-Yes (0.47) es estructuralmente más bajo debido al desbalance 84/16: con solo 47 casos de abandono en test, cada error tiene un impacto desproporcionado.
+- `class_weight='balanced'` prioriza el recall sobre la precisión, que es la estrategia correcta para retención de talento: es mejor tener una conversación innecesaria (falso positivo) que perder a un empleado sin haber intentado retenerlo (falso negativo).
+
+---
+
 ## Consideraciones Éticas
 
 TalentGuard está diseñado como una **herramienta de apoyo a la retención de talento**, no como un sistema de evaluación automática de personal.
@@ -302,16 +382,18 @@ TalentGuard está diseñado como una **herramienta de apoyo a la retención de t
 
 ### Mitigaciones implementadas
 
-- Advertencia ética visible en el dashboard.
+- Advertencia ética visible en el dashboard, API y frontend web.
 - Interpretación en lenguaje natural (no solo un número).
-- Transparencia en factores de riesgo que contribuyen a la predicción.
-- Métricas reportadas honestamente, incluyendo limitaciones.
+- Transparencia en métricas reportadas honestamente, incluyendo limitaciones.
+- Página dedicada a uso ético y responsable en el frontend (`/about`).
 
 Para el análisis completo, ver [`docs/reflexion_etica.md`](docs/reflexion_etica.md).
 
 ---
 
 ## Tecnologías Utilizadas
+
+### Backend (Python)
 
 | Tecnología | Versión | Propósito |
 |-----------|---------|-----------|
@@ -326,8 +408,25 @@ Para el análisis completo, ver [`docs/reflexion_etica.md`](docs/reflexion_etica
 | pydantic | 2.13.4 | Validación de datos en API |
 | matplotlib | 3.10.9 | Visualización |
 | seaborn | 0.13.2 | Visualización estadística |
-| MkDocs Material | 9.5.27 | Documentación web |
-| Git / GitHub | — | Control de versiones |
+
+### Frontend (Web)
+
+| Tecnología | Versión | Propósito |
+|-----------|---------|-----------|
+| Next.js | 16.2.9 | Framework React |
+| TypeScript | 5.x | Tipado estático |
+| Tailwind CSS | 4.x | Estilos utilitarios |
+| shadcn/ui | 4.x | Componentes de UI |
+| Recharts | 2.x | Gráficos interactivos |
+| React Hook Form | — | Manejo de formularios |
+| Zod | — | Validación de esquemas |
+
+### Documentación y Despliegue
+
+| Tecnología | Versión | Propósito |
+|-----------|---------|-----------|
+| MkDocs Material | 9.5.27 | Sitio web de documentación |
+| Git / GitHub | — | Control de versiones y CI/CD |
 
 ---
 
@@ -338,7 +437,7 @@ Durante el desarrollo de este proyecto integrador se aplicaron los siguientes co
 - **Semana 1:** Formulación del problema analítico y selección del dataset
 - **Semana 2:** Pipeline de limpieza, EDA, codificación de variables y diccionario de datos
 - **Semana 3:** Modelado ML, comparación de algoritmos, serialización y dashboard Streamlit
-- **Semana 4:** Documentación técnica, arquitectura, reflexión ética, API REST (Ruta A), dashboard con 7 secciones, y presentación final
+- **Semana 4:** Documentación técnica, arquitectura, reflexión ética, API REST (Ruta A), dashboard con 7 secciones, frontend Next.js y presentación final
 
 ---
 

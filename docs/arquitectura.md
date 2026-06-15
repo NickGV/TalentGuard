@@ -11,44 +11,64 @@
 ## Diagrama de Arquitectura
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           TALENTGUARD                                    │
-│                  Sistema de Predicción de Rotación                        │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────────┐   │
-│  │   DATOS       │    │  PIPELINE    │    │     MODELO ML             │   │
-│  │              │    │  DE ETL      │    │                          │   │
-│  │  raw/        │───▶│              │───▶│  Logistic Regression      │   │
-│  │  WA_Fn...csv │    │ 02_EDA_     │    │  + StandardScaler         │   │
-│  │              │    │ limpieza    │    │                          │   │
-│  │  Kaggle IBM  │    │              │    │  modelo_final.pkl         │   │
-│  │  HR Dataset  │    │ - limpieza  │    │  model_metadata.json      │   │
-│  └──────────────┘    │ - OHE       │    └─────────────┬────────────┘   │
-│                       │ - split     │                  │                │
-│                       └──────────────┘                  │                │
-│                                                         │ joblib.load   │
-│                                                         ▼                │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                   DASHBOARD STREAMLIT                             │   │
-│  │                                                                  │   │
-│  │  ┌─────────────────────────┐  ┌──────────────────────────────┐   │   │
-│  │  │  Tab 1: Análisis        │  │  Tab 2: Predicción           │   │   │
-│  │  │  Exploratorio           │  │                              │   │   │
-│  │  │                         │  │  Formulario de entrada       │   │   │
-│  │  │  - 5 visualizaciones    │  │  → modelo → resultado        │   │   │
-│  │  │  - Filtros interactivos │  │  → interpretación            │   │   │
-│  │  │  - Métricas dinámicas   │  │  → factores de riesgo        │   │   │
-│  │  └─────────────────────────┘  └──────────────────────────────┘   │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-│                                                                          │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │              DOCUMENTACIÓN (GitHub Pages / MkDocs)                │   │
-│  │  docs/ → ficha_proyecto, analisis_dataset, diccionario_datos,    │   │
-│  │           arquitectura, reflexion_etica, wireframe_dashboard      │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            TALENTGUARD                                     │
+│                   Sistema de Predicción de Rotación                         │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ┌──────────────┐    ┌──────────────┐    ┌────────────────────────────┐   │
+│  │   DATOS      │    │  PIPELINE    │    │       MODELO ML            │   │
+│  │   CRUDOS     │    │  DE ETL      │    │                            │   │
+│  │              │    │              │    │  Logistic Regression        │   │
+│  │  raw/        │───▶│ 02_EDA_     │───▶│  + StandardScaler           │   │
+│  │  WA_Fn...csv │    │ limpieza    │    │                            │   │
+│  │              │    │              │    │  modelo_final.pkl           │   │
+│  │  Kaggle IBM  │    │ - limpieza  │    │  model_metadata.json        │   │
+│  │  HR Dataset  │    │ - OHE       │    └─────────────┬──────────────┘   │
+│  └──────────────┘    │ - split     │                  │                  │
+│                       └──────────────┘                  │                  │
+│                                                         │ joblib.load     │
+│                                                         ▼                  │
+│                    ┌────────────────────────────────────────────────────┐  │
+│                    │                  DASHBOARD STREAMLIT                │  │
+│                    │  ┌──────────────┐  ┌───────────────────────────┐   │  │
+│                    │  │ 7 secciones  │  │  Predicción               │   │  │
+│                    │  │ sidebar nav  │  │  Form 18 campos           │   │  │
+│                    │  │ 5 charts EDA │  │  → modelo → resultado     │   │  │
+│                    │  │ + filtros    │  │  → interpretación         │   │  │
+│                    │  └──────────────┘  └───────────────────────────┘   │  │
+│                    │  :8501 — app_final.py                              │  │
+│                    └────────────────────────────────────────────────────┘  │
+│                                                                           │
+│                    ┌────────────────────────────────────────────────────┐  │
+│                    │             API REST — FastAPI                      │  │
+│                    │                                                     │  │
+│                    │   GET  /health    GET  /datos    GET  /variables    │  │
+│                    │   GET  /metricas  POST /predict                     │  │
+│                    │   Documentación Swagger en /docs                    │  │
+│                    │  :8000 — api/main.py                                │  │
+│                    └──────────────────┬─────────────────────────────────┘  │
+│                                       │                                    │
+│                                       ▼                                    │
+│                    ┌────────────────────────────────────────────────────┐  │
+│                    │           WEB APP — Next.js 16                     │  │
+│                    │                                                     │  │
+│                    │   /          Inicio (KPIs + CTA)                    │  │
+│                    │   /data      Datos (diccionario)                   │  │
+│                    │   /insights  Análisis (5 charts + filtros)         │  │
+│                    │   /predict   Predicción (form + resultado)         │  │
+│                    │   /model     Métricas del modelo                   │  │
+│                    │   /about     Acerca + ética                        │  │
+│                    │  :3000 — web/ (Next.js + TS + Tailwind)            │  │
+│                    └────────────────────────────────────────────────────┘  │
+│                                                                           │
+│                    ┌────────────────────────────────────────────────────┐  │
+│                    │        DOCUMENTACIÓN (GitHub Pages / MkDocs)        │  │
+│                    │  docs/ → ficha_proyecto, analisis_dataset,         │  │
+│                    │  diccionario_datos, arquitectura, reflexion_etica  │  │
+│                    └────────────────────────────────────────────────────┘  │
+│                                                                           │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -60,7 +80,7 @@
 | Componente | Descripción | Tecnología |
 |-----------|-------------|------------|
 | `data/raw/` | Dataset original sin modificar (IBM HR Analytics CSV) | CSV |
-| `data/processed/` | Dataset limpio y codificado listo para modelado (`dataset_limpio.csv`, `X_train.csv`, `X_test.csv`, `y_train.csv`, `y_test.csv`) | pandas, scikit-learn |
+| `data/processed/` | Dataset limpio y codificado listo para modelado | pandas, scikit-learn |
 
 ### 1.2 Capa de Preparación (ETL)
 
@@ -91,22 +111,48 @@
 StandardScaler → LogisticRegression(class_weight='balanced', max_iter=1000, random_state=42)
 ```
 
-### 1.4 Capa de Presentación (Dashboard)
+### 1.4 Capa de Presentación — Dashboard Streamlit
 
 | Componente | Descripción | Tecnología |
 |-----------|-------------|------------|
-| `app_final.py` | Dashboard interactivo con dos pestañas | Streamlit |
-| Tab 1: Análisis Exploratorio | 5 visualizaciones, 3 filtros interactivos, métricas del dataset | matplotlib, Streamlit |
-| Tab 2: Predicción | Formulario de 15 campos, predicción en vivo, interpretación, factores de riesgo | Streamlit, joblib |
+| `app_final.py` | Dashboard interactivo con 7 secciones y sidebar | Streamlit |
+| Sección 1-2: Inicio + Datos | KPIs principales, tabla de datos y diccionario de variables | Streamlit |
+| Sección 3: Análisis Exploratorio | 5 visualizaciones, 3 filtros interactivos | matplotlib, Streamlit |
+| Sección 4-5: Modelo + Métricas | Explicación del modelo y métricas con interpretación | Streamlit |
+| Sección 6: Predicción | Formulario de 18 campos, predicción en vivo, interpretación | Streamlit, joblib |
+| Sección 7: Conclusiones | Hallazgos, limitaciones y próximos pasos | Streamlit |
 
-**Características del dashboard:**
-- Carga del modelo serializado con `@st.cache_resource`
-- Métricas dinámicas desde `model_metadata.json` (sin valores hardcodeados)
-- Advertencia ética: "El resultado es una estimación, no una decisión automática"
-- Interpretación en lenguaje natural del resultado
-- Factores de riesgo contextuales basados en el perfil ingresado
+### 1.5 Capa de Servicios — API REST
 
-### 1.5 Capa de Documentación
+| Componente | Descripción | Tecnología |
+|-----------|-------------|------------|
+| `api/main.py` | FastAPI con 6 endpoints y documentación Swagger | FastAPI, uvicorn |
+| `api/schemas.py` | Modelos Pydantic con validación de datos | Pydantic |
+
+**Endpoints:**
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/` | Información general |
+| `GET` | `/health` | Estado del servicio |
+| `GET` | `/datos` | Resumen del dataset |
+| `GET` | `/variables` | Campos del formulario de predicción |
+| `GET` | `/metricas` | Métricas del modelo |
+| `POST` | `/predict` | Predecir riesgo de abandono |
+
+### 1.6 Capa de Presentación — Web App (Next.js)
+
+| Componente | Descripción | Tecnología |
+|-----------|-------------|------------|
+| `web/` | Frontend moderno que consume la API REST | Next.js 16 + TypeScript |
+| Página Inicio (`/`) | Hero + KPIs principales desde la API | Tailwind CSS, shadcn/ui |
+| Página Datos (`/data`) | Diccionario de variables y estadísticas | Tailwind CSS |
+| Página Insights (`/insights`) | 5 charts interactivos con filtros | Recharts |
+| Página Predict (`/predict`) | Formulario 18 campos + resultado con indicador de riesgo | React Hook Form, Zod |
+| Página Model (`/model`) | Métricas del modelo con gráfico comparativo | Recharts |
+| Página About (`/about`) | Hallazgos, limitaciones, advertencia ética | Tailwind CSS |
+
+### 1.7 Capa de Documentación
 
 | Componente | Descripción | Tecnología |
 |-----------|-------------|------------|
@@ -163,87 +209,178 @@ StandardScaler → LogisticRegression(class_weight='balanced', max_iter=1000, ra
         ▼
 ┌────────────────────────────┐
 │  models/                    │
-│  ├── modelo_final.pkl      │  ← Pipeline serializado
+│  ├── modelo_final.pkl      │  ← Pipeline serializado (joblib)
 │  └── model_metadata.json   │  ← Métricas y metadatos
 └────────────────────────────┘
         │
-        ▼
-┌──────────────────────────────────────────────┐
-│  app_final.py (Streamlit)                     │
-│                                              │
-│  joblib.load(modelo_final.pkl)                │
-│  json.load(model_metadata.json)               │
-│  pd.read_csv(dataset_limpio.csv)              │
-│                                              │
-│  ┌─────────────┐   ┌────────────────┐        │
-│  │ EDA + filtros│   │ Predicción     │        │
-│  │ + visualizac.│   │ + formulario   │        │
-│  └─────────────┘   │ + resultado    │        │
-│                     │ + interpretac. │        │
-│                     └────────────────┘        │
-└──────────────────────────────────────────────┘
+        ├──────────────────────────────────────────────────┐
+        │                                                  │
+        ▼                                                  ▼
+┌──────────────────────────────────┐    ┌──────────────────────────────┐
+│  app_final.py (Streamlit)        │    │  api/main.py (FastAPI)       │
+│  :8501                           │    │  :8000                       │
+│                                  │    │                              │
+│  joblib.load → predicción        │    │  joblib.load → /predict      │
+│  pandas → EDA + visualizaciones  │    │  pandas → /datos             │
+│  matplotlib → charts             │    │  JSON → /metricas, /health   │
+└──────────────────────────────────┘    └──────────────┬───────────────┘
+                                                        │
+                                                        ▼
+                                              ┌──────────────────────────┐
+                                              │  web/ (Next.js)          │
+                                              │  :3000                   │
+                                              │                          │
+                                              │  fetch → getHealth()     │
+                                              │  fetch → getDatos()      │
+                                              │  fetch → getMetricas()   │
+                                              │  fetch → postPredict()   │
+                                              │  fetch → datos.json (st) │
+                                              └──────────────────────────┘
 ```
 
 ---
 
 ## 3. Tecnologías por Capa
 
+### Backend (Python)
+
 | Capa | Tecnología | Versión | Propósito |
 |-----|-----------|---------|-----------|
 | **Lenguaje** | Python | 3.12 | Lenguaje principal del proyecto |
-| **Procesamiento** | pandas | 2.1.4 | Manipulación y limpieza de datos |
-| **Numérico** | numpy | 1.26.2 | Operaciones numéricas y matriciales |
-| **Machine Learning** | scikit-learn | 1.3.2 | Modelado, pipelines, métricas |
-| **Serialización** | joblib | 1.3.2 | Guardado/carga del modelo |
-| **Dashboard** | Streamlit | 1.29.0 | Visualización interactiva web |
-| **Visualización** | matplotlib | 3.8.2 | Gráficos estáticos |
-| | seaborn | 0.13.0 | Visualización estadística |
-| **Entorno** | Jupyter | 1.1.1 | Notebooks de exploración y modelado |
+| **Procesamiento** | pandas | 3.0.3 | Manipulación y limpieza de datos |
+| **Numérico** | numpy | 2.4.6 | Operaciones numéricas y matriciales |
+| **Machine Learning** | scikit-learn | 1.9.0 | Modelado, pipelines, métricas |
+| **Serialización** | joblib | 1.5.0 | Guardado/carga del modelo |
+| **Dashboard** | Streamlit | 1.58.0 | Visualización interactiva web |
+| **API REST** | FastAPI | 0.136.3 | Servicio REST |
+| **Servidor ASGI** | uvicorn | 0.49.0 | Servidor para FastAPI |
+| **Validación** | pydantic | 2.13.4 | Validación de datos en API |
+| **Visualización** | matplotlib | 3.10.9 | Gráficos estáticos |
+| | seaborn | 0.13.2 | Visualización estadística |
+
+### Frontend (Web)
+
+| Capa | Tecnología | Versión | Propósito |
+|-----|-----------|---------|-----------|
+| **Framework** | Next.js | 16.2.9 | Framework React con App Router |
+| **Lenguaje** | TypeScript | 5.x | Tipado estático |
+| **Estilos** | Tailwind CSS | 4.x | Estilos utilitarios |
+| **Componentes** | shadcn/ui | 4.x | Componentes de UI accesibles |
+| **Gráficos** | Recharts | 2.x | Visualizaciones interactivas |
+| **Formularios** | React Hook Form | — | Manejo de formularios |
+| **Validación** | Zod | — | Validación de esquemas |
+
+### Documentación
+
+| Capa | Tecnología | Versión | Propósito |
+|-----|-----------|---------|-----------|
 | **Documentación** | MkDocs Material | 9.5.27 | Sitio web de documentación |
 | **Control de versiones** | Git / GitHub | — | Repositorio y despliegue |
 
 ---
 
-## 4. Decisiones Técnicas
+## 4. Flujo de Datos entre Aplicaciones
 
-### 4.1 Pipeline de Modelado (no data leakage)
-
-Se utiliza `sklearn.pipeline.Pipeline` para encapsular `StandardScaler` + `LogisticRegression`. El escalado se ajusta **exclusivamente sobre el conjunto de entrenamiento** y se aplica sobre test, evitando fuga de datos.
-
-### 4.2 Serialización Local
-
-El modelo se entrena y serializa en el mismo entorno local donde corre Streamlit. Esto evita conflictos de versiones de scikit-learn (error crítico si se entrena en Colab y se carga localmente).
-
-### 4.3 Manejo del Desbalance
-
-Se usa `class_weight='balanced'` para compensar el desbalance 84/16 en `Attrition`. La métrica principal es F1-macro, no accuracy.
-
-### 4.4 Caché en Streamlit
-
-Se aplican `@st.cache_resource` y `@st.cache_data` para evitar recargar el modelo, metadatos y datos en cada interacción del usuario.
+```
+                    ┌──────────────────────┐
+                    │   model_metadata.json │
+                    │   modelo_final.pkl    │
+                    └──────────┬───────────┘
+                               │
+           ┌───────────────────┼───────────────────┐
+           │                   │                   │
+           ▼                   ▼                   ▼
+    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+    │  Streamlit   │    │   FastAPI    │    │   Next.js    │
+    │              │    │              │    │              │
+    │  Carga local │    │  Carga local │    │  HTTP fetch  │
+    │  joblib.load │    │  joblib.load │    │  → /predict  │
+    └──────────────┘    └──────┬───────┘    └──────────────┘
+                               │
+                               │ CORS allow_origins=["*"]
+                               │
+                        (consumido por Next.js)
+```
 
 ---
 
-## 5. Diagrama de Despliegue
+## 5. Decisiones Técnicas
+
+### 5.1 Pipeline de Modelado (no data leakage)
+
+Se utiliza `sklearn.pipeline.Pipeline` para encapsular `StandardScaler` + `LogisticRegression`. El escalado se ajusta **exclusivamente sobre el conjunto de entrenamiento** y se aplica sobre test, evitando fuga de datos.
+
+### 5.2 Serialización Local
+
+El modelo se entrena y serializa en el mismo entorno local donde corre Streamlit. Esto evita conflictos de versiones de scikit-learn (error crítico si se entrena en Colab y se carga localmente).
+
+### 5.3 Manejo del Desbalance
+
+Se usa `class_weight='balanced'` para compensar el desbalance 84/16 en `Attrition`. La métrica principal es F1-macro, no accuracy.
+
+### 5.4 Caché en Streamlit
+
+Se aplican `@st.cache_resource` y `@st.cache_data` para evitar recargar el modelo, metadatos y datos en cada interacción del usuario.
+
+### 5.5 API como Middle Layer
+
+La API REST actúa como capa intermedia entre el modelo y el frontend Next.js. Esto permite que el frontend no necesite Python ni joblib, y que cualquier cliente HTTP pueda consumir el modelo.
+
+### 5.6 Frontend con shadcn/ui
+
+Se eligió shadcn/ui v4 sobre bibliotecas como Material UI o Chakra por:
+- Componentes headless accesibles (basados en @base-ui/react)
+- Estilos nativos de Tailwind CSS (sin runtime CSS-in-JS)
+- Bundle más pequeño al copiar solo los componentes usados
+
+---
+
+## 6. Diagrama de Despliegue
 
 ```
-┌─────────────────────────────────────────┐
-│         Computador Local                │
-│                                         │
-│  ┌───────────────┐  ┌────────────────┐  │
-│  │ Entorno       │  │ Dashboard      │  │
-│  │ Virtual (venv)│  │ Streamlit      │  │
-│  │               │  │                │  │
-│  │ Python 3.12   │  │ localhost:8501 │  │
-│  │ scikit-learn  │  │                │  │
-│  │ joblib        │  │ app_final.py   │  │
-│  └───────────────┘  └────────────────┘  │
-│                                         │
-│  ┌─────────────────────────────────────┐ │
-│  │ Repositorio GitHub                  │ │
-│  │ github.com/NickGV/TalentGuard       │ │
-│  └─────────────────────────────────────┘ │
-└─────────────────────────────────────────┘
+                    ┌─────────────────────────────────────┐
+                    │         Computador Local             │
+                    │                                     │
+                    │  ┌───────────────┐                   │
+                    │  │ Entorno       │                   │
+                    │  │ Virtual (venv)│                   │
+                    │  │               │                   │
+                    │  │ Python 3.12   │                   │
+                    │  │ scikit-learn  │                   │
+                    │  │ joblib        │                   │
+                    │  └───────────────┘                   │
+                    │                                     │
+                    │  ┌──────────────┐  ┌──────────────┐  │
+                    │  │ Dashboard    │  │ API REST     │  │
+                    │  │ Streamlit    │  │ FastAPI      │  │
+                    │  │ :8501        │  │ :8000        │  │
+                    │  └──────────────┘  └──────────────┘  │
+                    │                                     │
+                    │  ┌────────────────────────────────┐  │
+                    │  │ Frontend Next.js                │  │
+                    │  │ :3000                           │  │
+                    │  └────────────────────────────────┘  │
+                    │                                     │
+                    │  ┌────────────────────────────────┐  │
+                    │  │ Documentación MkDocs            │  │
+                    │  │ :8008                           │  │
+                    │  └────────────────────────────────┘  │
+                    └─────────────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌─────────────────────────────────────┐
+                    │        GitHub / GitHub Pages         │
+                    │                                     │
+                    │  ┌─────────────────────────────┐     │
+                    │  │ Repositorio                 │     │
+                    │  │ github.com/NickGV/TalentGuard│     │
+                    │  └─────────────────────────────┘     │
+                    │                                     │
+                    │  ┌─────────────────────────────┐     │
+                    │  │ GitHub Pages (Documentación) │     │
+                    │  │ nickgv.github.io/TalentGuard │     │
+                    │  └─────────────────────────────┘     │
+                    └─────────────────────────────────────┘
 ```
 
 ---
