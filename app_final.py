@@ -645,7 +645,7 @@ def seccion_prediccion():
 
         riesgo_txt = (
             f"El modelo estima que este empleado tiene una probabilidad del "
-            f"<strong>{prob_abandono * 100:.1f}%</strong> de abandonar la organizaci\u00f3n. "
+            f"**{prob_abandono * 100:.1f}%** de abandonar la organizaci\u00f3n. "
         )
 
         if prediccion == 1:
