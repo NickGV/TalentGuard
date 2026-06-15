@@ -21,6 +21,15 @@ El proyecto integra tres aplicaciones principales:
 | **API REST** | FastAPI | Exposición del modelo ML como servicio |
 | **Web App** | Next.js + TypeScript + Tailwind | Frontend moderno que consume la API |
 
+### Deployments
+
+| Aplicación | URL | Plataforma |
+|-----------|-----|------------|
+| 🌐 **Web App** | [talent-guard-omega.vercel.app](https://talent-guard-omega.vercel.app/) | Vercel |
+| 🔌 **API REST** | [talentguard.onrender.com](https://talentguard.onrender.com/) | Render |
+| 📖 **Swagger Docs** | [talentguard.onrender.com/docs](https://talentguard.onrender.com/docs) | Render (incluido en API) |
+| 📊 **Dashboard Streamlit** | [talentguard-nickgv.streamlit.app](https://talentguard-nickgv.streamlit.app/) | Streamlit Community Cloud |
+
 ---
 
 ## Pregunta Analítica
@@ -246,12 +255,13 @@ mkdocs serve
 
 ### Resumen de puertos
 
-| Aplicación | Puerto | URL |
-|-----------|--------|-----|
-| Dashboard Streamlit | 8501 | http://localhost:8501 |
-| API REST (FastAPI) | 8000 | http://localhost:8000 |
-| Frontend Next.js | 3000 | http://localhost:3000 |
-| Documentación MkDocs | 8008 | http://localhost:8008 |
+| Aplicación | Local | Producción |
+|-----------|-------|------------|
+| Dashboard Streamlit | http://localhost:8501 | [talentguard-nickgv.streamlit.app](https://talentguard-nickgv.streamlit.app/) |
+| API REST (FastAPI) | http://localhost:8000 | [talentguard.onrender.com](https://talentguard.onrender.com/) |
+| Swagger Docs | http://localhost:8000/docs | [talentguard.onrender.com/docs](https://talentguard.onrender.com/docs) |
+| Frontend Next.js | http://localhost:3000 | [talent-guard-omega.vercel.app](https://talent-guard-omega.vercel.app/) |
+| Documentación MkDocs | http://localhost:8008 | — |
 
 ### (Opcional) Reentrenar el modelo
 
@@ -280,10 +290,14 @@ TalentGuard expone el modelo de Machine Learning como servicio REST a través de
 
 La API incluye documentación interactiva generada automáticamente:
 
-🔗 **http://127.0.0.1:8000/docs**
+| Entorno | URL |
+|---------|-----|
+| 🚀 **Producción** | [talentguard.onrender.com/docs](https://talentguard.onrender.com/docs) |
+| 💻 **Local** | [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) |
 
 ### Ejemplo de uso
 
+**Local:**
 ```bash
 curl -X POST http://127.0.0.1:8000/predict \
   -H "Content-Type: application/json" \
@@ -311,9 +325,28 @@ Respuesta:
 }
 ```
 
+**Producción:**
+```bash
+curl -X POST https://talentguard.onrender.com/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "Age": 35,
+    "Gender": 1,
+    "MaritalStatus": "Single",
+    "MonthlyIncome": 5000,
+    "OverTime": 1,
+    "JobSatisfaction": 3,
+    "Department": "Sales",
+    "JobRole": "Sales Executive",
+    ...
+  }'
+```
+
 ---
 
 ## Frontend Web (Next.js)
+
+🌐 **Producción:** [talent-guard-omega.vercel.app](https://talent-guard-omega.vercel.app/)
 
 El frontend moderno consume la API REST y ofrece las mismas funcionalidades que el dashboard Streamlit, pero con una interfaz mejorada.
 
@@ -450,5 +483,9 @@ Junio 2026
 
 ---
 
-[![Documentación](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://nickgv.github.io/TalentGuard/)
-[![Dataset](https://img.shields.io/badge/dataset-Kaggle-20BEFF)](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset)
+[![Web App](https://img.shields.io/badge/web-Vercel-000?logo=vercel)](https://talent-guard-omega.vercel.app/)
+[![API](https://img.shields.io/badge/api-Render-46E3B7?logo=render)](https://talentguard.onrender.com/)
+[![Swagger](https://img.shields.io/badge/swagger-docs-85EA2D?logo=swagger)](https://talentguard.onrender.com/docs)
+[![Streamlit](https://img.shields.io/badge/streamlit-cloud-FF4B4B?logo=streamlit)](https://talentguard-nickgv.streamlit.app/)
+[![Documentación](https://img.shields.io/badge/docs-GitHub%20Pages-blue?logo=github)](https://nickgv.github.io/TalentGuard/)
+[![Dataset](https://img.shields.io/badge/dataset-Kaggle-20BEFF?logo=kaggle)](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset)
