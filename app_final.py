@@ -272,7 +272,7 @@ def seccion_eda():
             conteo.values, labels=labels, autopct="%1.1f%%",
             colors=[SLATE, CORAL], startangle=90, textprops={"color": TEXTO},
         )
-        ax1.set_title("Distribuci\u00f3n de Attrition", color=SLATE)
+        ax1.set_title("El 16% de abandono justifica F1-Score sobre accuracy", color=SLATE)
         st.pyplot(fig1)
         plt.close()
     with col2:
@@ -295,7 +295,7 @@ def seccion_eda():
     bars2 = ax2.bar(ot_attr.index, ot_attr.values, color=[SLATE, CORAL], alpha=0.85, width=0.5)
     ax2.bar_label(bars2, fmt="%.1f%%", padding=5, fontsize=11)
     ax2.set_ylabel("Tasa de abandono (%)", color=TEXTO)
-    ax2.set_title("Tasa de abandono seg\u00fan horas extra", color=SLATE)
+    ax2.set_title("Las horas extra triplican el riesgo de abandono", color=SLATE)
     ax2.set_ylim(0, 45)
     ax2.tick_params(colors=TEXTO)
     for spine in ax2.spines.values():
@@ -315,7 +315,7 @@ def seccion_eda():
             ax3.hist(subset, bins=30, alpha=0.6, label=label, color=color)
     ax3.set_xlabel("Ingreso mensual (USD)", color=TEXTO)
     ax3.set_ylabel("Cantidad de empleados", color=TEXTO)
-    ax3.set_title("Distribuci\u00f3n del ingreso mensual por rotaci\u00f3n", color=SLATE)
+    ax3.set_title("Quienes abandonan tienen un ingreso mediano $2.000 menor", color=SLATE)
     ax3.legend()
     ax3.tick_params(colors=TEXTO)
     for spine in ax3.spines.values():
@@ -334,7 +334,7 @@ def seccion_eda():
     bars4 = ax4.bar(sat_attr.index, sat_attr.values, color=SLATE, alpha=0.85, width=0.5)
     ax4.bar_label(bars4, fmt="%.1f%%", padding=4, fontsize=10)
     ax4.set_ylabel("Tasa de abandono (%)", color=TEXTO)
-    ax4.set_title("Tasa de abandono por nivel de satisfacci\u00f3n laboral", color=SLATE)
+    ax4.set_title("Baja satisfacci\u00f3n laboral duplica la tasa de abandono", color=SLATE)
     ax4.set_ylim(0, 35)
     ax4.tick_params(colors=TEXTO)
     for spine in ax4.spines.values():
@@ -360,7 +360,7 @@ def seccion_eda():
     ax5.bar_label(bars5, fmt="%.1f%%", padding=4, fontsize=10)
     ax5.set_xlabel("Antig\u00fcedad en la empresa", color=TEXTO)
     ax5.set_ylabel("Tasa de abandono (%)", color=TEXTO)
-    ax5.set_title("Tasa de abandono por tramos de antig\u00fcedad", color=SLATE)
+    ax5.set_title("El 61% de los abandonos ocurren en los primeros 3 a\u00f1os", color=SLATE)
     ax5.set_ylim(0, 50)
     ax5.tick_params(colors=TEXTO)
     for spine in ax5.spines.values():

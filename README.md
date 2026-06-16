@@ -474,6 +474,16 @@ Durante el desarrollo de este proyecto integrador se aplicaron los siguientes co
 
 ---
 
+## Mejoras Futuras
+
+- **Algoritmos adicionales:** Probar XGBoost y Gradient Boosting con optimización de hiperparámetros (GridSearchCV / RandomizedSearchCV)
+- **Análisis de equidad:** Evaluar sesgo del modelo por género, edad y nivel educativo (fairness audit)
+- **Features adicionales:** Incorporar métricas de engagement y encuestas de clima laboral como variables predictoras
+- **Monitoreo:** Implementar detección de data drift para re-entrenamiento periódico en producción
+- **Datos reales:** Validar el modelo con datos de una organización real (el dataset IBM es sintético)
+
+---
+
 ## Autor
 
 **Nicolas Gomez**  
