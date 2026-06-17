@@ -463,17 +463,6 @@ Para el análisis completo, ver [`docs/reflexion_etica.md`](docs/reflexion_etica
 
 ---
 
-## Resultados de Aprendizaje
-
-Durante el desarrollo de este proyecto integrador se aplicaron los siguientes conocimientos:
-
-- **Semana 1:** Formulación del problema analítico y selección del dataset
-- **Semana 2:** Pipeline de limpieza, EDA, codificación de variables y diccionario de datos
-- **Semana 3:** Modelado ML, comparación de algoritmos, serialización y dashboard Streamlit
-- **Semana 4:** Documentación técnica, arquitectura, reflexión ética, API REST (Ruta A), dashboard con 7 secciones, frontend Next.js y presentación final
-
----
-
 ## Mejoras Futuras
 
 - **Algoritmos adicionales:** Probar XGBoost y Gradient Boosting con optimización de hiperparámetros (GridSearchCV / RandomizedSearchCV)
